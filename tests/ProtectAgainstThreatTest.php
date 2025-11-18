@@ -22,9 +22,40 @@ test('safe request pass checks', function () {
         ->assertSee('ok');
 });
 
+it('allow requests when disabled', function () {
+    config()->set('threat-blocker.enabled', false);
+
+    withServerVariables(['REMOTE_ADDR' => '1.0.170.118'])
+        ->get('/test')
+        ->assertOk()
+        ->assertSee('ok');
+});
+
 it('block request from abused ip', function () {
     withServerVariables(['REMOTE_ADDR' => '1.0.170.118'])
         ->get('/test')
         ->assertForbidden()
         ->assertDontSee('ok');
+});
+
+it('block request from blacklist', function () {
+    config()->set('threat-blocker.detectors.Keepsuit\ThreatBlocker\Detectors\AbuseIpDetector.blacklist', [
+        '10.10.10.10',
+    ]);
+
+    withServerVariables(['REMOTE_ADDR' => '10.10.10.10'])
+        ->get('/test')
+        ->assertForbidden()
+        ->assertDontSee('ok');
+});
+
+it('allow request from whitelist', function () {
+    config()->set('threat-blocker.detectors.Keepsuit\ThreatBlocker\Detectors\AbuseIpDetector.whitelist', [
+        '1.0.170.118',
+    ]);
+
+    withServerVariables(['REMOTE_ADDR' => '1.0.170.118'])
+        ->get('/test')
+        ->assertOk()
+        ->assertSee('ok');
 });
