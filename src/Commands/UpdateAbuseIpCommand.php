@@ -2,63 +2,38 @@
 
 namespace Keepsuit\ThreatBlocker\Commands;
 
-use GuzzleHttp\Psr7\Utils;
 use Illuminate\Console\Command;
-use Illuminate\Http\Client\ConnectionException;
-use Illuminate\Support\Collection;
-use Illuminate\Support\Facades\Http;
-use Illuminate\Support\LazyCollection;
-use Keepsuit\ThreatBlocker\Contracts\StorageDriver;
-use Keepsuit\ThreatBlocker\Detectors\AbuseIpDetector;
+use Illuminate\Support\Str;
+use Keepsuit\ThreatBlocker\Contracts\Detector;
+use Keepsuit\ThreatBlocker\Contracts\SourceUpdatable;
 use Keepsuit\ThreatBlocker\ThreatBlocker;
 
 class UpdateAbuseIpCommand extends Command
 {
-    public $signature = 'threat-blocker:update-abuseip';
+    public $signature = 'threat-blocker:update';
 
-    public $description = 'Update AbuseIp database';
+    public $description = 'Update detectors sources';
 
-    public function handle(ThreatBlocker $threatBlocker, StorageDriver $storage): int
+    public function handle(ThreatBlocker $threatBlocker): int
     {
-        $this->outputComponents()->info('Fetching AbuseIp database...');
+        $this->outputComponents()->info('Updating threat blocker detectors sources...');
 
-        $detector = $threatBlocker->getDetector(AbuseIpDetector::class);
+        foreach ($threatBlocker->allDetectors() as $detector) {
+            if (! $detector instanceof SourceUpdatable) {
+                continue;
+            }
 
-        if ($detector === null) {
-            $this->outputComponents()->error('AbuseIpDetector is not registered.');
-
-            return self::FAILURE;
+            $this->outputComponents()->task($this->detectorName($detector), fn () => $detector->updateSource());
         }
-
-        $ips = $this->fetchAbuseIpDatabase($detector->sourceUrl);
-
-        $storage->set('abuseip-list', $ips->all());
 
         return self::SUCCESS;
     }
 
-    /**
-     * @return Collection<array-key,int>
-     *
-     * @throws ConnectionException
-     */
-    protected function fetchAbuseIpDatabase(string $sourceUrl): Collection
+    protected function detectorName(Detector $detector): string
     {
-        $response = Http::throw()->get($sourceUrl);
-
-        $lines = new LazyCollection(function () use ($response) {
-            $body = $response->getBody();
-
-            while (! $body->eof()) {
-                yield Utils::readLine($body);
-            }
-        });
-
-        return $lines
-            ->map(fn (string $line) => preg_replace('/\s*#.*$/', '', trim($line)) ?: '')
-            ->filter(fn (string $line) => filter_var($line, FILTER_VALIDATE_IP) !== false)
-            ->map(fn (string $ip) => ip2long($ip))
-            ->values()
-            ->collect();
+        return Str::of(class_basename($detector))
+            ->rtrim('Detector')
+            ->slug()
+            ->toString();
     }
 }

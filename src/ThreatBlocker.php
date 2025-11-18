@@ -28,4 +28,12 @@ final class ThreatBlocker
     {
         return array_find($this->detectors, fn (Detector $detector) => $detector instanceof $class);
     }
+
+    /**
+     * @return Detector[]
+     */
+    public function allDetectors(): array
+    {
+        return $this->detectors;
+    }
 }
