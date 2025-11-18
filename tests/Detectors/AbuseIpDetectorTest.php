@@ -13,7 +13,7 @@ test('register abuseip detector with default settings', function () {
         ->not->toBeNull()
         ->toBeInstanceOf(\Keepsuit\ThreatBlocker\Detectors\AbuseIpDetector::class);
 
-    expect(invade($detector))
+    expect($detector)
         ->sourceUrl->toBe(\Keepsuit\ThreatBlocker\Enums\AbuseIpSource::Days30->url())
         ->blacklistIps->toBe([])
         ->whitelistIps->toBe(['127.0.0.1']);

@@ -7,17 +7,17 @@ use Keepsuit\ThreatBlocker\Enums\AbuseIpSource;
 
 class AbuseIpDetector implements Detector
 {
-    protected string $sourceUrl;
+    public protected(set) string $sourceUrl;
 
     /**
      * @var string[]
      */
-    protected array $blacklistIps;
+    public protected(set) array $blacklistIps;
 
     /**
      * @var string[]
      */
-    protected array $whitelistIps;
+    public protected(set) array $whitelistIps;
 
     public function register(Application $app, array $options): void
     {

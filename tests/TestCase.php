@@ -3,6 +3,7 @@
 namespace Keepsuit\ThreatBlocker\Tests;
 
 use Illuminate\Database\Eloquent\Factories\Factory;
+use Illuminate\Support\Facades\Http;
 use Keepsuit\ThreatBlocker\ThreatBlockerServiceProvider;
 use Orchestra\Testbench\TestCase as Orchestra;
 
@@ -15,16 +16,18 @@ class TestCase extends Orchestra
         Factory::guessFactoryNamesUsing(
             fn (string $modelName) => 'Keepsuit\\ThreatBlocker\\Database\\Factories\\'.class_basename($modelName).'Factory'
         );
+
+        Http::preventStrayRequests();
     }
 
-    protected function getPackageProviders($app)
+    protected function getPackageProviders($app): array
     {
         return [
             ThreatBlockerServiceProvider::class,
         ];
     }
 
-    public function getEnvironmentSetUp($app)
+    public function getEnvironmentSetUp($app): void
     {
         config()->set('database.default', 'testing');
 

@@ -14,7 +14,10 @@ class ThreatBlockerServiceProvider extends PackageServiceProvider
     {
         $package
             ->name('laravel-threat-blocker')
-            ->hasConfigFile();
+            ->hasConfigFile()
+            ->hasCommands(
+                UpdateAbuseIpCommand::class,
+            );
     }
 
     public function packageBooted(): void
