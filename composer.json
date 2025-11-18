@@ -1,17 +1,17 @@
 {
-    "name": ":vendor_slug/:package_slug",
-    "description": ":package_description",
+    "name": "keepsuit/laravel-threat-blocker",
+    "description": "Block threat request to your application",
     "keywords": [
-        ":vendor_name",
+        "Keepsuit",
         "laravel",
-        ":package_slug"
+        "laravel-threat-blocker"
     ],
-    "homepage": "https://github.com/:vendor_slug/:package_slug",
+    "homepage": "https://github.com/keepsuit/laravel-threat-blocker",
     "license": "MIT",
     "authors": [
         {
-            "name": ":author_name",
-            "email": "author@domain.com",
+            "name": "Fabio Capucci",
+            "email": "f.capucci@keepsuit.com",
             "role": "Developer"
         }
     ],
@@ -35,13 +35,13 @@
     },
     "autoload": {
         "psr-4": {
-            "VendorName\\Skeleton\\": "src/",
-            "VendorName\\Skeleton\\Database\\Factories\\": "database/factories/"
+            "Keepsuit\\ThreatBlocker\\": "src/",
+            "Keepsuit\\ThreatBlocker\\Database\\Factories\\": "database/factories/"
         }
     },
     "autoload-dev": {
         "psr-4": {
-            "VendorName\\Skeleton\\Tests\\": "tests/",
+            "Keepsuit\\ThreatBlocker\\Tests\\": "tests/",
             "Workbench\\App\\": "workbench/app/"
         }
     },
@@ -63,10 +63,10 @@
     "extra": {
         "laravel": {
             "providers": [
-                "VendorName\\Skeleton\\SkeletonServiceProvider"
+                "Keepsuit\\ThreatBlocker\\ThreatBlockerServiceProvider"
             ],
             "aliases": {
-                "Skeleton": "VendorName\\Skeleton\\Facades\\Skeleton"
+                "ThreatBlocker": "Keepsuit\\ThreatBlocker\\Facades\\ThreatBlocker"
             }
         }
     },
