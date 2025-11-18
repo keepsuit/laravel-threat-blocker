@@ -7,7 +7,7 @@ use Keepsuit\ThreatBlocker\Events\ThreatDetectedEvent;
 use Keepsuit\ThreatBlocker\Exceptions\ThreatDetectedException;
 use Keepsuit\ThreatBlocker\ThreatBlocker;
 
-class ProtectAgainstThreat
+class ProtectAgainstThreats
 {
     public function __construct(
         protected ThreatBlocker $threatBlocker

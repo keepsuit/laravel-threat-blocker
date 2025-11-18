@@ -5,15 +5,7 @@
 [![GitHub Code Style Action Status](https://img.shields.io/github/actions/workflow/status/keepsuit/laravel-threat-blocker/fix-php-code-style-issues.yml?branch=main&label=code%20style&style=flat-square)](https://github.com/keepsuit/laravel-threat-blocker/actions?query=workflow%3A"Fix+PHP+code+style+issues"+branch%3Amain)
 [![Total Downloads](https://img.shields.io/packagist/dt/keepsuit/laravel-threat-blocker.svg?style=flat-square)](https://packagist.org/packages/keepsuit/laravel-threat-blocker)
 
-This is where your description should go. Limit it to a paragraph or two. Consider adding a small example.
-
-## Support us
-
-[<img src="https://github-ads.s3.eu-central-1.amazonaws.com/laravel-threat-blocker.jpg?t=1" width="419px" />](https://spatie.be/github-ad-click/laravel-threat-blocker)
-
-We invest a lot of resources into creating [best in class open source packages](https://spatie.be/open-source). You can support us by [buying one of our paid products](https://spatie.be/open-source/support-us).
-
-We highly appreciate you sending us a postcard from your hometown, mentioning which of our package(s) you are using. You'll find our address on [our contact page](https://spatie.be/about-us). We publish all received postcards on [our virtual postcard wall](https://spatie.be/open-source/postcards).
+Laravel Threat Blocker is a package to block threat requests to your Laravel application based on different rules.
 
 ## Installation
 
@@ -21,13 +13,6 @@ You can install the package via composer:
 
 ```bash
 composer require keepsuit/laravel-threat-blocker
-```
-
-You can publish and run the migrations with:
-
-```bash
-php artisan vendor:publish --tag="laravel-threat-blocker-migrations"
-php artisan migrate
 ```
 
 You can publish the config file with:
@@ -40,20 +25,52 @@ This is the contents of the published config file:
 
 ```php
 return [
+    /**
+     * This option enables or disables the Threat Blocker protection.
+     */
+    'enabled' => env('THREAT_BLOCKER_ENABLED', true),
+
+    /**
+     * Storage driver to use for caching detectors data.
+     */
+    'storage_driver' => env('THREAT_BLOCKER_STORAGE_DRIVER', 'cache'),
+
+    'storage' => [
+        'cache' => [
+            'store' => env('THREAT_BLOCKER_CACHE_STORE', env('CACHE_STORE', 'file')),
+            'prefix' => env('THREAT_BLOCKER_CACHE_PREFIX', 'threat_blocker'),
+        ],
+    ],
+
+    /**
+     * The following list of "detectors" will be used to identify threats.
+     * You can enable or disable each detector individually and configure their settings.
+     */
+    'detectors' => [
+        \Keepsuit\ThreatBlocker\Detectors\AbuseIpDetector::class => [
+            'enabled' => env('THREAT_BLOCKER_ABUSE_IP_DETECTOR_ENABLED', true),
+            // Source url for AbuseIP data, it can be a custom url or one of the predefined sources (provided by https://github.com/borestad/blocklist-abuseipdb)
+            'source' => \Keepsuit\ThreatBlocker\Enums\AbuseIpSource::Days30->url(),
+            'blacklist' => [
+                // These IPs will always be blocked by the AbuseIpDetector
+            ],
+            'whitelist' => [
+                // These IPs will never be blocked by the AbuseIpDetector
+                '127.0.0.1',
+            ],
+        ],
+    ],
 ];
-```
-
-Optionally, you can publish the views using
-
-```bash
-php artisan vendor:publish --tag="laravel-threat-blocker-views"
 ```
 
 ## Usage
 
+Add the `ProtectAgainstThreats` middleware to routes you want to protect:
+
 ```php
-$threatBlocker = new Keepsuit\ThreatBlocker();
-echo $threatBlocker->echoPhrase('Hello, Keepsuit!');
+use Keepsuit\ThreatBlocker\Middleware\ProtectAgainstThreats;
+
+Route::post('contact', [ContactController::class, 'submit'])->middleware(ProtectAgainstThreats::class);
 ```
 
 ## Testing
@@ -66,17 +83,9 @@ composer test
 
 Please see [CHANGELOG](CHANGELOG.md) for more information on what has changed recently.
 
-## Contributing
-
-Please see [CONTRIBUTING](CONTRIBUTING.md) for details.
-
-## Security Vulnerabilities
-
-Please review [our security policy](../../security/policy) on how to report security vulnerabilities.
-
 ## Credits
 
-- [Fabio Capucci](https://github.com/)
+- [Fabio Capucci](https://github.com/keepsuit)
 - [All Contributors](../../contributors)
 
 ## License

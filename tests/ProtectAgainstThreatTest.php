@@ -1,7 +1,7 @@
 <?php
 
 use Keepsuit\ThreatBlocker\Contracts\StorageDriver;
-use Keepsuit\ThreatBlocker\Middleware\ProtectAgainstThreat;
+use Keepsuit\ThreatBlocker\Middleware\ProtectAgainstThreats;
 
 use function Pest\Laravel\get;
 use function Pest\Laravel\withServerVariables;
@@ -13,7 +13,7 @@ beforeEach(function () {
 
     Route::any('test', function () {
         return 'ok';
-    })->middleware(ProtectAgainstThreat::class);
+    })->middleware(ProtectAgainstThreats::class);
 });
 
 test('safe request pass checks', function () {
