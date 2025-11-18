@@ -1,6 +1,6 @@
 <?php
 
-namespace Keepsuit\ThreatBlocker\Detectors;
+namespace Keepsuit\ThreatBlocker\Contracts;
 
 use Illuminate\Foundation\Application;
 

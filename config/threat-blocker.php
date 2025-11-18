@@ -7,6 +7,18 @@ return [
     'enabled' => env('THREAT_BLOCKER_ENABLED', true),
 
     /**
+     * Storage driver to use for caching detectors data.
+     */
+    'storage_driver' => env('THREAT_BLOCKER_STORAGE_DRIVER', 'cache'),
+
+    'storage' => [
+        'cache' => [
+            'store' => env('THREAT_BLOCKER_CACHE_STORE', env('CACHE_STORE', 'file')),
+            'prefix' => env('THREAT_BLOCKER_CACHE_PREFIX', 'threat_blocker'),
+        ],
+    ],
+
+    /**
      * The following list of "detectors" will be used to identify threats.
      * You can enable or disable each detector individually and configure their settings.
      */

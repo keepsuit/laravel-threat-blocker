@@ -3,6 +3,7 @@
 namespace Keepsuit\ThreatBlocker\Detectors;
 
 use Illuminate\Foundation\Application;
+use Keepsuit\ThreatBlocker\Contracts\Detector;
 use Keepsuit\ThreatBlocker\Enums\AbuseIpSource;
 
 class AbuseIpDetector implements Detector

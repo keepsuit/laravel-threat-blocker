@@ -1,8 +1,8 @@
 <?php
 
 use Illuminate\Support\Facades\Artisan;
-use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\Http;
+use Keepsuit\ThreatBlocker\Contracts\StorageDriver;
 
 beforeEach(function () {
     Http::fake([
@@ -15,7 +15,7 @@ beforeEach(function () {
 test('updates abuse ip database from source url', function () {
     Artisan::call(\Keepsuit\ThreatBlocker\Commands\UpdateAbuseIpCommand::class);
 
-    expect(Cache::get('threat-blocker:abuseip-list'))
+    expect(app(StorageDriver::class)->get('abuseip-list'))
         ->toBeArray()
         ->toHaveCount(52204);
 });

@@ -4,7 +4,8 @@ namespace Keepsuit\ThreatBlocker;
 
 use Illuminate\Foundation\Application;
 use Keepsuit\ThreatBlocker\Commands\UpdateAbuseIpCommand;
-use Keepsuit\ThreatBlocker\Detectors\Detector;
+use Keepsuit\ThreatBlocker\Contracts\Detector;
+use Keepsuit\ThreatBlocker\Contracts\StorageDriver;
 use Spatie\LaravelPackageTools\Package;
 use Spatie\LaravelPackageTools\PackageServiceProvider;
 
@@ -27,6 +28,15 @@ class ThreatBlockerServiceProvider extends PackageServiceProvider
 
     protected function registerBindings(): void
     {
+        $this->app->bind(StorageDriver::class, function (Application $app) {
+            $driver = $app['config']->get('threat-blocker.storage_driver');
+
+            return match ($driver) {
+                'cache' => new Storage\CacheStorageDriver($app['config']->get('threat-blocker.storage.cache')),
+                default => throw new \InvalidArgumentException('Invalid storage driver specified for Threat Blocker: '.$driver),
+            };
+        });
+
         $this->app->scoped(ThreatBlocker::class, function (Application $app) {
             $threatBlocker = new ThreatBlocker;
 

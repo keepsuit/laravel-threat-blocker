@@ -2,7 +2,7 @@
 
 namespace Keepsuit\ThreatBlocker;
 
-use Keepsuit\ThreatBlocker\Detectors\Detector;
+use Keepsuit\ThreatBlocker\Contracts\Detector;
 
 final class ThreatBlocker
 {

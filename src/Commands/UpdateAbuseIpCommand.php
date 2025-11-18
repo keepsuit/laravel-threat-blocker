@@ -6,9 +6,9 @@ use GuzzleHttp\Psr7\Utils;
 use Illuminate\Console\Command;
 use Illuminate\Http\Client\ConnectionException;
 use Illuminate\Support\Collection;
-use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\Http;
 use Illuminate\Support\LazyCollection;
+use Keepsuit\ThreatBlocker\Contracts\StorageDriver;
 use Keepsuit\ThreatBlocker\Detectors\AbuseIpDetector;
 use Keepsuit\ThreatBlocker\ThreatBlocker;
 
@@ -18,7 +18,7 @@ class UpdateAbuseIpCommand extends Command
 
     public $description = 'Update AbuseIp database';
 
-    public function handle(ThreatBlocker $threatBlocker): int
+    public function handle(ThreatBlocker $threatBlocker, StorageDriver $storage): int
     {
         $this->outputComponents()->info('Fetching AbuseIp database...');
 
@@ -32,7 +32,7 @@ class UpdateAbuseIpCommand extends Command
 
         $ips = $this->fetchAbuseIpDatabase($detector->sourceUrl);
 
-        Cache::forever('threat-blocker:abuseip-list', $ips->all());
+        $storage->set('abuseip-list', $ips->all());
 
         return self::SUCCESS;
     }
