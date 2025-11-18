@@ -3,8 +3,6 @@
 namespace Keepsuit\ThreatBlocker\Commands;
 
 use Illuminate\Console\Command;
-use Illuminate\Support\Str;
-use Keepsuit\ThreatBlocker\Contracts\Detector;
 use Keepsuit\ThreatBlocker\Contracts\SourceUpdatable;
 use Keepsuit\ThreatBlocker\ThreatBlocker;
 
@@ -23,17 +21,9 @@ class UpdateAbuseIpCommand extends Command
                 continue;
             }
 
-            $this->outputComponents()->task($this->detectorName($detector), fn () => $detector->updateSource());
+            $this->outputComponents()->task($threatBlocker->detectorId($detector), fn () => $detector->updateSource());
         }
 
         return self::SUCCESS;
-    }
-
-    protected function detectorName(Detector $detector): string
-    {
-        return Str::of(class_basename($detector))
-            ->rtrim('Detector')
-            ->slug()
-            ->toString();
     }
 }

@@ -5,6 +5,7 @@ namespace Keepsuit\ThreatBlocker\Detectors;
 use GuzzleHttp\Psr7\Utils;
 use Illuminate\Foundation\Application;
 use Illuminate\Http\Client\ConnectionException;
+use Illuminate\Http\Request;
 use Illuminate\Support\Collection;
 use Illuminate\Support\Facades\Http;
 use Illuminate\Support\LazyCollection;
@@ -12,10 +13,11 @@ use Keepsuit\ThreatBlocker\Contracts\Detector;
 use Keepsuit\ThreatBlocker\Contracts\SourceUpdatable;
 use Keepsuit\ThreatBlocker\Contracts\StorageDriver;
 use Keepsuit\ThreatBlocker\Enums\AbuseIpSource;
+use Keepsuit\ThreatBlocker\Exceptions\ThreatDetectedException;
 
 class AbuseIpDetector implements Detector, SourceUpdatable
 {
-    protected const LIST_CACHE_KEY = 'abuseip-list';
+    public const string LIST_CACHE_KEY = 'abuseip-list';
 
     public protected(set) string $sourceUrl;
 
@@ -28,6 +30,11 @@ class AbuseIpDetector implements Detector, SourceUpdatable
      * @var string[]
      */
     public protected(set) array $whitelistIps;
+
+    /**
+     * @var int[]|null
+     */
+    protected ?array $abuseIpList = null;
 
     public function __construct(
         protected StorageDriver $storage,
@@ -42,9 +49,11 @@ class AbuseIpDetector implements Detector, SourceUpdatable
 
     public function updateSource(): void
     {
-        $ips = $this->fetchAbuseIpDatabase($this->sourceUrl);
+        $ips = $this->fetchAbuseIpDatabase($this->sourceUrl)->all();
 
-        $this->storage->set(static::LIST_CACHE_KEY, $ips->all());
+        $this->storage->set(static::LIST_CACHE_KEY, $ips);
+
+        $this->abuseIpList = $ips;
     }
 
     /**
@@ -70,5 +79,53 @@ class AbuseIpDetector implements Detector, SourceUpdatable
             ->map(fn (string $ip) => ip2long($ip))
             ->values()
             ->collect();
+    }
+
+    protected function getAbuseIpList(): array
+    {
+        if ($this->abuseIpList === null) {
+            $this->abuseIpList = $this->storage->get(static::LIST_CACHE_KEY);
+        }
+
+        if ($this->abuseIpList === null) {
+            try {
+                $this->updateSource();
+            } catch (\Throwable $throwable) {
+                if (app()->runningUnitTests()) {
+                    throw $throwable;
+                }
+            }
+        }
+
+        return $this->abuseIpList ?? [];
+    }
+
+    /**
+     * {@inheritDoc}
+     */
+    public function check(Request $request): void
+    {
+        $ip = $request->ip();
+
+        if ($ip === null) {
+            return;
+        }
+
+        if (in_array($ip, $this->whitelistIps, true)) {
+            return;
+        }
+
+        if (in_array($ip, $this->blacklistIps, true)) {
+            throw new ThreatDetectedException('Blacklisted IP detected.');
+        }
+
+        $longIp = ip2long($ip);
+        if ($longIp === false) {
+            return;
+        }
+
+        if (in_array($longIp, $this->getAbuseIpList(), true)) {
+            throw new ThreatDetectedException('AbuseIP database match detected.');
+        }
     }
 }

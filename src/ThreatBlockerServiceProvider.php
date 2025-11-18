@@ -38,7 +38,9 @@ class ThreatBlockerServiceProvider extends PackageServiceProvider
         });
 
         $this->app->scoped(ThreatBlocker::class, function (Application $app) {
-            $threatBlocker = new ThreatBlocker;
+            $threatBlocker = new ThreatBlocker(
+                config('threat-blocker.enabled', true)
+            );
 
             foreach (config('threat-blocker.detectors') as $key => $options) {
                 if (is_string($key) && $options === false) {
