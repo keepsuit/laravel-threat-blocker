@@ -2,9 +2,9 @@
 
 namespace Keepsuit\ThreatBlocker;
 
+use Keepsuit\ThreatBlocker\Commands\ThreatBlockerCommand;
 use Spatie\LaravelPackageTools\Package;
 use Spatie\LaravelPackageTools\PackageServiceProvider;
-use Keepsuit\ThreatBlocker\Commands\ThreatBlockerCommand;
 
 class ThreatBlockerServiceProvider extends PackageServiceProvider
 {
