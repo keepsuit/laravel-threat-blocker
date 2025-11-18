@@ -19,17 +19,17 @@ class AbuseIpDetector implements Detector, SourceUpdatable
 {
     public const string LIST_CACHE_KEY = 'abuseip-list';
 
-    public protected(set) string $sourceUrl;
+    protected string $sourceUrl;
 
     /**
      * @var string[]
      */
-    public protected(set) array $blacklistIps;
+    protected array $blacklistIps;
 
     /**
      * @var string[]
      */
-    public protected(set) array $whitelistIps;
+    protected array $whitelistIps;
 
     /**
      * @var int[]|null
