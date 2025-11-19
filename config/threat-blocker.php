@@ -18,6 +18,12 @@ return [
         ],
     ],
 
+    /*
+     * The responder class that will be used to respond to detected threats.
+     * You can create your own responder by implementing the Keepsuit\ThreatBlocker\Contracts\ThreatResponder interface.
+     */
+    'responder' => \Keepsuit\ThreatBlocker\Reponders\BlankPageResponder::class,
+
     /**
      * The following list of "detectors" will be used to identify threats.
      * You can enable or disable each detector individually and configure their settings.

@@ -34,7 +34,7 @@ it('allow requests when disabled', function () {
 it('block request from abused ip', function () {
     withServerVariables(['REMOTE_ADDR' => '1.0.170.118'])
         ->get('/test')
-        ->assertForbidden()
+        ->assertOk()
         ->assertDontSee('ok');
 });
 
@@ -45,7 +45,7 @@ it('block request from blacklist', function () {
 
     withServerVariables(['REMOTE_ADDR' => '10.10.10.10'])
         ->get('/test')
-        ->assertForbidden()
+        ->assertOk()
         ->assertDontSee('ok');
 });
 

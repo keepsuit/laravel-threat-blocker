@@ -3,6 +3,7 @@
 namespace Keepsuit\ThreatBlocker\Middleware;
 
 use Illuminate\Http\Request;
+use Keepsuit\ThreatBlocker\Contracts\ThreatResponder;
 use Keepsuit\ThreatBlocker\Events\ThreatDetectedEvent;
 use Keepsuit\ThreatBlocker\Exceptions\ThreatDetectedException;
 use Keepsuit\ThreatBlocker\ThreatBlocker;
@@ -10,7 +11,8 @@ use Keepsuit\ThreatBlocker\ThreatBlocker;
 class ProtectAgainstThreats
 {
     public function __construct(
-        protected ThreatBlocker $threatBlocker
+        protected ThreatBlocker $threatBlocker,
+        protected ThreatResponder $responder
     ) {}
 
     public function handle(Request $request, \Closure $next): mixed
@@ -29,7 +31,7 @@ class ProtectAgainstThreats
                     exception: $exception
                 ));
 
-                abort(403);
+                return $this->responder->respond($request, $next);
             }
         }
 

@@ -6,6 +6,7 @@ use Illuminate\Foundation\Application;
 use Keepsuit\ThreatBlocker\Commands\UpdateAbuseIpCommand;
 use Keepsuit\ThreatBlocker\Contracts\Detector;
 use Keepsuit\ThreatBlocker\Contracts\StorageDriver;
+use Keepsuit\ThreatBlocker\Contracts\ThreatResponder;
 use Spatie\LaravelPackageTools\Package;
 use Spatie\LaravelPackageTools\PackageServiceProvider;
 
@@ -28,6 +29,8 @@ class ThreatBlockerServiceProvider extends PackageServiceProvider
 
     protected function registerBindings(): void
     {
+        $this->app->bind(ThreatResponder::class, config('threat-blocker.responder'));
+
         $this->app->bind(StorageDriver::class, function (Application $app) {
             $driver = $app['config']->get('threat-blocker.storage_driver');
 
