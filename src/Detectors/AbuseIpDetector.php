@@ -8,6 +8,7 @@ use Illuminate\Http\Client\ConnectionException;
 use Illuminate\Http\Request;
 use Illuminate\Support\Collection;
 use Illuminate\Support\Facades\Http;
+use Illuminate\Support\Facades\Log;
 use Illuminate\Support\LazyCollection;
 use Keepsuit\ThreatBlocker\Contracts\Detector;
 use Keepsuit\ThreatBlocker\Contracts\SourceUpdatable;
@@ -88,13 +89,7 @@ class AbuseIpDetector implements Detector, SourceUpdatable
         }
 
         if ($this->abuseIpList === null) {
-            try {
-                $this->updateSource();
-            } catch (\Throwable $throwable) {
-                if (app()->runningUnitTests()) {
-                    throw $throwable;
-                }
-            }
+            Log::warning('ThreatBlocker: abuse ip list is missing. Run threat-blocker:update command to fetch the latest data.');
         }
 
         return $this->abuseIpList ?? [];
