@@ -13,7 +13,7 @@ return [
 
     'storage' => [
         'cache' => [
-            'store' => env('THREAT_BLOCKER_CACHE_STORE', env('CACHE_STORE', 'file')),
+            'store' => env('THREAT_BLOCKER_CACHE_STORE', env('CACHE_STORE', env('CACHE_DRIVER', 'file'))),
             'prefix' => env('THREAT_BLOCKER_CACHE_PREFIX', 'threat_blocker'),
         ],
     ],
