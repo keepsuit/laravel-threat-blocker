@@ -29,6 +29,9 @@ return [
      * You can enable or disable each detector individually and configure their settings.
      */
     'detectors' => [
+        /**
+         * Block requests coming from IPs listed in the AbuseIPDB database.
+         */
         \Keepsuit\ThreatBlocker\Detectors\AbuseIpDetector::class => [
             'enabled' => env('THREAT_BLOCKER_ABUSE_IP_DETECTOR_ENABLED', true),
             // Source url for AbuseIP data, it can be a custom url or one of the predefined sources (provided by https://github.com/borestad/blocklist-abuseipdb)
@@ -40,6 +43,13 @@ return [
                 // These IPs will never be blocked by the AbuseIpDetector
                 '127.0.0.1',
             ],
+        ],
+        /**
+         * Block requests that contain form submissions with honeypot fields filled out.
+         * This detector requires spatie/laravel-honeypot package to be installed and configured.
+         */
+        \Keepsuit\ThreatBlocker\Detectors\FormHoneypotDetector::class => [
+            'enabled' => env('THREAT_BLOCKER_FORM_HONEYPOT_DETECTOR_ENABLED', true),
         ],
     ],
 ];
