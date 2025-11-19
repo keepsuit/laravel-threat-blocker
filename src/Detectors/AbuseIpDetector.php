@@ -89,7 +89,7 @@ class AbuseIpDetector implements Detector, SourceUpdatable
         }
 
         if ($this->abuseIpList === null) {
-            Log::warning('ThreatBlocker: abuse ip list is missing. Run threat-blocker:update command to fetch the latest data.');
+            rescue(fn() => $this->updateSource());
         }
 
         return $this->abuseIpList ?? [];
