@@ -75,13 +75,25 @@ return [
 
 ## Usage
 
-Add the `ProtectAgainstThreats` middleware to routes you want to protect:
+1. Add the `ProtectAgainstThreats` middleware to routes you want to protect:
 
-```php
-use Keepsuit\ThreatBlocker\Middleware\ProtectAgainstThreats;
+    ```php
+    use Keepsuit\ThreatBlocker\Middleware\ProtectAgainstThreats;
+    
+    Route::post('contact', [ContactController::class, 'submit'])->middleware(ProtectAgainstThreats::class);
+    ```
 
-Route::post('contact', [ContactController::class, 'submit'])->middleware(ProtectAgainstThreats::class);
-```
+2. Run the update command to warm the detectors cache:
+
+    ```bash
+    php artisan threat-blocker:update
+    ```
+
+3. Schedule the update command to run periodically (e.g., daily) using Laravel's task scheduling:
+
+    ```php
+    $schedule->command('threat-blocker:update')->daily();
+    ```
 
 ## Testing
 
