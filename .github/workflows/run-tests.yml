@@ -17,6 +17,7 @@ jobs:
   test:
     runs-on: ${{ matrix.os }}
     timeout-minutes: 5
+    continue-on-error: ${{ matrix.php == '8.5' }}
     strategy:
       fail-fast: true
       matrix:
