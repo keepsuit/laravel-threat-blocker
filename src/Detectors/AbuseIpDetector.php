@@ -8,6 +8,7 @@ use Illuminate\Http\Client\ConnectionException;
 use Illuminate\Http\Request;
 use Illuminate\Support\Collection;
 use Illuminate\Support\Facades\Http;
+use Illuminate\Support\Facades\Log;
 use Illuminate\Support\LazyCollection;
 use Keepsuit\ThreatBlocker\Contracts\Detector;
 use Keepsuit\ThreatBlocker\Contracts\SourceUpdatable;
@@ -88,6 +89,7 @@ class AbuseIpDetector implements Detector, SourceUpdatable
         }
 
         if ($this->abuseIpList === null) {
+            Log::warning('AbuseIpDetector: AbuseIP database not found in storage, fetching from source...');
             rescue(fn () => $this->updateSource());
         }
 
