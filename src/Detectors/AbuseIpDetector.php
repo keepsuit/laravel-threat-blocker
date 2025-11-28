@@ -2,14 +2,12 @@
 
 namespace Keepsuit\ThreatBlocker\Detectors;
 
-use GuzzleHttp\Psr7\Utils;
 use Illuminate\Foundation\Application;
 use Illuminate\Http\Client\ConnectionException;
 use Illuminate\Http\Request;
 use Illuminate\Support\Collection;
 use Illuminate\Support\Facades\Http;
 use Illuminate\Support\Facades\Log;
-use Illuminate\Support\LazyCollection;
 use Keepsuit\ThreatBlocker\Contracts\Detector;
 use Keepsuit\ThreatBlocker\Contracts\SourceUpdatable;
 use Keepsuit\ThreatBlocker\Contracts\StorageDriver;
@@ -66,20 +64,14 @@ class AbuseIpDetector implements Detector, SourceUpdatable
     {
         $response = Http::throw()->get($sourceUrl);
 
-        $lines = new LazyCollection(function () use ($response) {
-            $body = $response->getBody();
-
-            while (! $body->eof()) {
-                yield Utils::readLine($body);
-            }
-        });
+        $lines = Collection::make(explode(PHP_EOL, $response->body()));
 
         return $lines
-            ->map(fn (string $line) => preg_replace('/\s*#.*$/', '', trim($line)) ?: '')
+            ->map(fn (string $line) => explode(' ', ltrim($line), limit: 2)[0])
             ->filter(fn (string $line) => filter_var($line, FILTER_VALIDATE_IP) !== false)
             ->map(fn (string $ip) => ip2long($ip))
-            ->values()
-            ->collect();
+            ->filter(fn (false|int $longIp) => $longIp !== false)
+            ->values();
     }
 
     protected function getAbuseIpList(): array
