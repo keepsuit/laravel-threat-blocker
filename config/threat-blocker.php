@@ -35,7 +35,7 @@ return [
         \Keepsuit\ThreatBlocker\Detectors\AbuseIpDetector::class => [
             'enabled' => env('THREAT_BLOCKER_ABUSE_IP_DETECTOR_ENABLED', true),
             // Source url for AbuseIP data, it can be a custom url or one of the predefined sources (provided by https://github.com/borestad/blocklist-abuseipdb)
-            'source' => \Keepsuit\ThreatBlocker\Enums\AbuseIpSource::Days30->url(),
+            'source' => \Keepsuit\ThreatBlocker\Enums\AbuseIpSource::Days60->url(),
             'blacklist' => [
                 // These IPs will always be blocked by the AbuseIpDetector
             ],
