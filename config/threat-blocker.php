@@ -1,5 +1,10 @@
 <?php
 
+use Keepsuit\ThreatBlocker\Detectors\AbuseIpDetector;
+use Keepsuit\ThreatBlocker\Detectors\FormHoneypotDetector;
+use Keepsuit\ThreatBlocker\Enums\AbuseIpSource;
+use Keepsuit\ThreatBlocker\Reponders\BlankPageResponder;
+
 return [
     /**
      * This option enables or disables the Threat Blocker protection.
@@ -22,7 +27,7 @@ return [
      * The responder class that will be used to respond to detected threats.
      * You can create your own responder by implementing the Keepsuit\ThreatBlocker\Contracts\ThreatResponder interface.
      */
-    'responder' => \Keepsuit\ThreatBlocker\Reponders\BlankPageResponder::class,
+    'responder' => BlankPageResponder::class,
 
     /**
      * The following list of "detectors" will be used to identify threats.
@@ -32,10 +37,10 @@ return [
         /**
          * Block requests coming from IPs listed in the AbuseIPDB database.
          */
-        \Keepsuit\ThreatBlocker\Detectors\AbuseIpDetector::class => [
+        AbuseIpDetector::class => [
             'enabled' => env('THREAT_BLOCKER_ABUSE_IP_DETECTOR_ENABLED', true),
             // Source url for AbuseIP data, it can be a custom url or one of the predefined sources (provided by https://github.com/borestad/blocklist-abuseipdb)
-            'source' => \Keepsuit\ThreatBlocker\Enums\AbuseIpSource::Days60->url(),
+            'source' => AbuseIpSource::Days60->url(),
             'blacklist' => [
                 // These IPs will always be blocked by the AbuseIpDetector
             ],
@@ -48,7 +53,7 @@ return [
          * Block requests that contain form submissions with honeypot fields filled out.
          * This detector requires spatie/laravel-honeypot package to be installed and configured.
          */
-        \Keepsuit\ThreatBlocker\Detectors\FormHoneypotDetector::class => [
+        FormHoneypotDetector::class => [
             'enabled' => env('THREAT_BLOCKER_FORM_HONEYPOT_DETECTOR_ENABLED', true),
         ],
     ],

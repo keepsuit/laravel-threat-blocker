@@ -2,12 +2,13 @@
 
 use Keepsuit\ThreatBlocker\Contracts\StorageDriver;
 use Keepsuit\ThreatBlocker\Detectors\AbuseIpDetector;
+use Keepsuit\ThreatBlocker\Enums\AbuseIpSource;
 use Keepsuit\ThreatBlocker\ThreatBlocker;
 use Spatie\TestTime\TestTime;
 
 beforeEach(function () {
     config()->set('threat-blocker.detectors', [
-        Keepsuit\ThreatBlocker\Detectors\AbuseIpDetector::class => true,
+        AbuseIpDetector::class => true,
     ]);
 });
 
@@ -19,7 +20,7 @@ test('register abuseip detector with default settings', function () {
         ->toBeInstanceOf(AbuseIpDetector::class);
 
     expect(invade($detector))
-        ->sourceUrl->toBe(\Keepsuit\ThreatBlocker\Enums\AbuseIpSource::Days60->url())
+        ->sourceUrl->toBe(AbuseIpSource::Days60->url())
         ->blacklistIps->toBe([])
         ->whitelistIps->toBe(['127.0.0.1']);
 });

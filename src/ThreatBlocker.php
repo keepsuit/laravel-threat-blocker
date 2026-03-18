@@ -2,6 +2,7 @@
 
 namespace Keepsuit\ThreatBlocker;
 
+use Illuminate\Support\Arr;
 use Illuminate\Support\Str;
 use Keepsuit\ThreatBlocker\Contracts\Detector;
 
@@ -36,12 +37,12 @@ final class ThreatBlocker
      */
     public function getDetector(string $class): ?Detector
     {
-        return array_find($this->detectors, fn (Detector $detector) => $detector instanceof $class);
+        return Arr::first($this->detectors, fn (Detector $detector) => $detector instanceof $class);
     }
 
     public function getDetectorById(string $id): ?Detector
     {
-        return array_find($this->detectors, fn (Detector $detector) => $this->detectorId($detector) === $id);
+        return Arr::first($this->detectors, fn (Detector $detector) => $this->detectorId($detector) === $id);
     }
 
     /**
