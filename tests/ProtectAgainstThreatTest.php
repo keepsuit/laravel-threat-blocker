@@ -1,6 +1,7 @@
 <?php
 
 use Keepsuit\ThreatBlocker\Contracts\StorageDriver;
+use Keepsuit\ThreatBlocker\Detectors\AbuseIpDetector;
 use Keepsuit\ThreatBlocker\Middleware\ProtectAgainstThreats;
 use Spatie\Honeypot\EncryptedTime;
 use Spatie\TestTime\TestTime;
@@ -12,7 +13,7 @@ use function Pest\Laravel\withServerVariables;
 beforeEach(function () {
     TestTime::freeze('Y-m-d H:i:s', '2025-01-01 00:00:00');
 
-    app(StorageDriver::class)->set(\Keepsuit\ThreatBlocker\Detectors\AbuseIpDetector::LIST_CACHE_KEY, [
+    app(StorageDriver::class)->set(AbuseIpDetector::LIST_CACHE_KEY, [
         ip2long('1.0.170.118'),
     ]);
 
