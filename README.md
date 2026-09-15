@@ -68,10 +68,58 @@ return [
          */
         \Keepsuit\ThreatBlocker\Detectors\FormHoneypotDetector::class => [
             'enabled' => env('THREAT_BLOCKER_FORM_HONEYPOT_DETECTOR_ENABLED', true),
+            'required_paths' => [
+                // 'register',
+            ],
+        ],
+        /**
+         * Block form submissions repeating an identical payload, as a bot filling a static
+         * template does, even when it renders the form and rotates its source address.
+         */
+        \Keepsuit\ThreatBlocker\Detectors\RepeatedPayloadDetector::class => [
+            'enabled' => env('THREAT_BLOCKER_REPEATED_PAYLOAD_DETECTOR_ENABLED', true),
+            'window' => 3600,
+            'threshold' => 10,
+            'paths' => [
+                // 'register' => ['first_name', 'last_name', 'phone'],
+            ],
         ],
     ],
 ];
 ```
+
+### Requiring the honeypot fields
+
+By default a submission that does not carry the honeypot fields at all is left alone, because
+requiring them everywhere would reject plain POST endpoints and APIs. A bot posting straight to
+an endpoint, skipping the form, therefore never gets checked. List under `required_paths` the
+paths served by a form that renders the `@honeypot` directive, and on those the fields become
+mandatory:
+
+```php
+'required_paths' => ['register', 'password/reset'],
+```
+
+### Detecting repeated payloads
+
+A bot that renders the form before submitting fills the honeypot correctly, and one rotating its
+source address survives any per-IP rate limit. What it usually cannot hide is the payload itself:
+it is built from a static template, so every submission carries the same values except the one
+field that has to be unique, normally the email address.
+
+`RepeatedPayloadDetector` fingerprints the configured fields and blocks a payload seen more than
+`threshold` times within `window` seconds:
+
+```php
+'paths' => [
+    'register' => ['first_name', 'last_name', 'phone'],
+],
+```
+
+Pick fields a real visitor fills with their own data. Never fingerprint a form on the field the
+bot varies, and be careful with forms where genuine submissions are legitimately identical — a
+newsletter box whose only real field is the email address would fingerprint every subscriber the
+same way, and block them all. With no path configured the detector does nothing.
 
 ## Usage
 

@@ -2,6 +2,7 @@
 
 use Keepsuit\ThreatBlocker\Detectors\AbuseIpDetector;
 use Keepsuit\ThreatBlocker\Detectors\FormHoneypotDetector;
+use Keepsuit\ThreatBlocker\Detectors\RepeatedPayloadDetector;
 use Keepsuit\ThreatBlocker\Enums\AbuseIpSource;
 use Keepsuit\ThreatBlocker\Reponders\BlankPageResponder;
 
@@ -55,6 +56,33 @@ return [
          */
         FormHoneypotDetector::class => [
             'enabled' => env('THREAT_BLOCKER_FORM_HONEYPOT_DETECTOR_ENABLED', true),
+            /**
+             * Paths whose submissions must carry the honeypot fields, so that a bot posting
+             * straight to the endpoint is rejected instead of skipping the check.
+             * Only list paths served by a form that renders the @honeypot directive.
+             */
+            'required_paths' => [
+                // 'register',
+            ],
+        ],
+        /**
+         * Block form submissions repeating an identical payload, as a bot filling a static
+         * template does, even when it renders the form and rotates its source address.
+         * It only looks at the paths listed below: with none, the detector does nothing.
+         */
+        RepeatedPayloadDetector::class => [
+            'enabled' => env('THREAT_BLOCKER_REPEATED_PAYLOAD_DETECTOR_ENABLED', true),
+            // Seconds each count covers, and how many identical payloads are tolerated within it.
+            'window' => 3600,
+            'threshold' => 10,
+            /**
+             * Path pattern => fields to fingerprint. Choose the fields a real visitor fills
+             * with their own data (a name, a phone number), never the one the bot varies to
+             * make each submission unique, which is usually the email address.
+             */
+            'paths' => [
+                // 'register' => ['first_name', 'last_name', 'phone'],
+            ],
         ],
     ],
 ];

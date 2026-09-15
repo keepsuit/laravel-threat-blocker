@@ -115,3 +115,27 @@ it('allows form submissions without honeypot filled', function () {
         ->assertOk()
         ->assertSee('ok');
 });
+
+it('blocks form submissions missing the honeypot fields on a required path', function () {
+    config()->set('threat-blocker.detectors.Keepsuit\ThreatBlocker\Detectors\FormHoneypotDetector.required_paths', [
+        'test',
+    ]);
+
+    post('/test', [
+        'other' => 'value',
+    ])
+        ->assertOk()
+        ->assertDontSee('ok');
+});
+
+it('allows form submissions missing the honeypot fields on other paths', function () {
+    config()->set('threat-blocker.detectors.Keepsuit\ThreatBlocker\Detectors\FormHoneypotDetector.required_paths', [
+        'other-form',
+    ]);
+
+    post('/test', [
+        'other' => 'value',
+    ])
+        ->assertOk()
+        ->assertSee('ok');
+});
