@@ -78,6 +78,20 @@ return [
             'whitelist' => [],
         ],
         /**
+         * Block POST requests that look like automated form submissions based on their headers.
+         */
+        \Keepsuit\ThreatBlocker\Detectors\BotSignatureDetector::class => [
+            'enabled' => env('THREAT_BLOCKER_BOT_SIGNATURE_DETECTOR_ENABLED', true),
+            'rules' => [
+                'missing_user_agent' => true,
+                'known_bot_user_agents' => true,
+                'missing_accept_language' => false,
+                'invalid_referer' => false,
+            ],
+            // Replace the defaults, or use array_merge() to extend them.
+            'user_agent_patterns' => \Keepsuit\ThreatBlocker\Detectors\BotSignatureDetector::DEFAULT_USER_AGENT_PATTERNS,
+        ],
+        /**
          * Block requests that contain form submissions with honeypot fields filled out.
          * This detector requires spatie/laravel-honeypot package to be installed and configured.
          */
@@ -94,6 +108,19 @@ return [
 `EmailReputationSource` provides built-in disposable-domain list URLs for the default,
 DNS-validated, curated, and high-coverage sources. The `source` option also accepts any
 custom URL serving one domain per line.
+
+`BotSignatureDetector` checks only `POST` requests. Each configured rule is independent:
+
+- `missing_user_agent` blocks missing or blank User-Agent headers.
+- `known_bot_user_agents` matches the configurable case-insensitive PCRE patterns.
+- `missing_accept_language` blocks missing or blank Accept-Language headers.
+- `invalid_referer` blocks missing, malformed, or cross-host Referer headers.
+
+The default User-Agent patterns are conservative and available through
+`BotSignatureDetector::DEFAULT_USER_AGENT_PATTERNS`. Supplying `user_agent_patterns`
+replaces them; extend them with `array_merge()` when needed. Crawler and link-preview
+identities such as Googlebot, bingbot, Slackbot, and Discordbot are intentionally not
+included in the defaults.
 
 ## Usage
 
