@@ -141,16 +141,6 @@ it('blocks form submissions without honeypot fields on strict endpoints', functi
         ->assertDontSee('ok');
 });
 
-it('supports required paths as a legacy strict alias', function () {
-    config()->set('threat-blocker.detectors.'.FormHoneypotDetector::class.'.required_paths', ['/test']);
-
-    post('/test', [
-        'other' => 'value',
-    ])
-        ->assertOk()
-        ->assertDontSee('ok');
-});
-
 it('allows form submissions without honeypot fields outside strict endpoints', function () {
     config()->set('threat-blocker.detectors.'.FormHoneypotDetector::class.'.strict', ['/contact']);
 

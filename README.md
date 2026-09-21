@@ -100,8 +100,6 @@ mandatory:
 'strict' => ['register', 'password/reset'],
 ```
 
-The legacy `required_paths` option is still accepted as an alias for the URI list.
-
 ### Detecting repeated payloads
 
 A bot that renders the form before submitting fills the honeypot correctly, and one rotating its

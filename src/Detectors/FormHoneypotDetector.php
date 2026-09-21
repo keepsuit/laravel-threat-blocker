@@ -4,7 +4,6 @@ namespace Keepsuit\ThreatBlocker\Detectors;
 
 use Illuminate\Foundation\Application;
 use Illuminate\Http\Request;
-use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\Log;
 use Keepsuit\ThreatBlocker\Contracts\Detector;
 use Keepsuit\ThreatBlocker\Exceptions\ThreatDetectedException;
@@ -18,10 +17,6 @@ class FormHoneypotDetector implements Detector
     public function register(Application $app, array $options): void
     {
         $strict = $options['strict'] ?? false;
-
-        if ($strict === false && isset($options['required_paths'])) {
-            $strict = $options['required_paths'];
-        }
 
         $this->strict = match (true) {
             is_bool($strict) => $strict,
@@ -45,12 +40,9 @@ class FormHoneypotDetector implements Detector
         }
 
         if (! class_exists(SpamProtection::class)) {
-            $cache = Cache::store(config('threat-blocker.storage.cache.store'));
-            $cacheKey = 'threat-blocker:missing-honeypot-dependency';
-
-            if ($cache->add($cacheKey, true, now()->addHour())) {
-                Log::error('FormHoneypotDetector: spatie/laravel-honeypot is not installed; honeypot checks are being skipped.');
-            }
+            Log::warning(
+                'FormHoneypotDetector: spatie/laravel-honeypot is not installed; honeypot checks are being skipped.',
+            );
 
             return;
         }
