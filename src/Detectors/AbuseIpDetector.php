@@ -37,14 +37,10 @@ class AbuseIpDetector implements Detector, SourceUpdatable
 
     protected ?CarbonInterface $lastUpdatedAt = null;
 
-    protected RemoteListCache $remoteListCache;
-
     public function __construct(
         protected StorageDriver $storage,
-        ?RemoteListCache $remoteListCache = null,
-    ) {
-        $this->remoteListCache = $remoteListCache ?? new RemoteListCache($storage);
-    }
+        protected RemoteListCache $remoteListCache,
+    ) {}
 
     public function register(Application $app, array $options): void
     {
