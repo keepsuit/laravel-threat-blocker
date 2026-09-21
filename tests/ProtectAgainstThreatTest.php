@@ -1,7 +1,9 @@
 <?php
 
+use Illuminate\Support\Facades\Log;
 use Keepsuit\ThreatBlocker\Contracts\StorageDriver;
 use Keepsuit\ThreatBlocker\Detectors\AbuseIpDetector;
+use Keepsuit\ThreatBlocker\Detectors\FormHoneypotDetector;
 use Keepsuit\ThreatBlocker\Middleware\ProtectAgainstThreats;
 use Spatie\Honeypot\EncryptedTime;
 use Spatie\TestTime\TestTime;
@@ -108,6 +110,57 @@ it('blocks form submissions too fast', function () {
 
 it('allows form submissions without honeypot filled', function () {
     config()->set('honeypot.honeypot_fields_required_for_all_forms', true);
+
+    post('/test', [
+        'other' => 'value',
+    ])
+        ->assertOk()
+        ->assertSee('ok');
+});
+
+it('blocks form submissions without honeypot fields in strict mode', function () {
+    config()->set('threat-blocker.detectors.'.FormHoneypotDetector::class.'.strict', true);
+    config()->set('honeypot.enabled', false);
+
+    post('/test', [
+        'other' => 'value',
+    ])
+        ->assertOk()
+        ->assertDontSee('ok');
+
+    expect(config('honeypot.enabled'))->toBeFalse();
+});
+
+it('blocks form submissions without honeypot fields on strict endpoints', function () {
+    config()->set('threat-blocker.detectors.'.FormHoneypotDetector::class.'.strict', ['/test']);
+
+    post('/test', [
+        'other' => 'value',
+    ])
+        ->assertOk()
+        ->assertDontSee('ok');
+});
+
+it('allows form submissions without honeypot fields outside strict endpoints', function () {
+    config()->set('threat-blocker.detectors.'.FormHoneypotDetector::class.'.strict', ['/contact']);
+
+    post('/test', [
+        'other' => 'value',
+    ])
+        ->assertOk()
+        ->assertSee('ok');
+});
+
+it('logs invalid strict configuration and keeps the optional behavior', function () {
+    Log::shouldReceive('error')
+        ->once()
+        ->withArgs(fn (string $message, array $context): bool => str_contains(
+            $message,
+            'the strict option must be a boolean or an array of URI patterns',
+        ))
+        ->andReturnNull();
+
+    config()->set('threat-blocker.detectors.'.FormHoneypotDetector::class.'.strict', 'invalid');
 
     post('/test', [
         'other' => 'value',

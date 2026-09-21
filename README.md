@@ -68,6 +68,9 @@ return [
          */
         \Keepsuit\ThreatBlocker\Detectors\FormHoneypotDetector::class => [
             'enabled' => env('THREAT_BLOCKER_FORM_HONEYPOT_DETECTOR_ENABLED', true),
+            // Require honeypot fields on every POST request or selected URI patterns.
+            // Examples: true, ['/contact', '/newsletter/*']
+            'strict' => false,
         ],
     ],
 ];
