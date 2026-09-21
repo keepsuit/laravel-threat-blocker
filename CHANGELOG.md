@@ -2,6 +2,16 @@
 
 All notable changes to `laravel-threat-blocker` will be documented in this file.
 
+## 0.1.3 - 2026-09-21
+
+### What's Changed
+
+* Bump actions/checkout from 6 to 7 by @dependabot[bot] in https://github.com/keepsuit/laravel-threat-blocker/pull/7
+* Bump dependabot/fetch-metadata from 2.5.0 to 3.1.0 by @dependabot[bot] in https://github.com/keepsuit/laravel-threat-blocker/pull/6
+* Enforce configurable strict honeypot requirements by @cappuc in https://github.com/keepsuit/laravel-threat-blocker/pull/9
+
+**Full Changelog**: https://github.com/keepsuit/laravel-threat-blocker/compare/0.1.2...0.1.3
+
 ## 0.1.2 - 2026-03-18
 
 ### What's Changed
