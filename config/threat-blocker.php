@@ -55,6 +55,14 @@ return [
          */
         FormHoneypotDetector::class => [
             'enabled' => env('THREAT_BLOCKER_FORM_HONEYPOT_DETECTOR_ENABLED', true),
+            /**
+             * Require honeypot fields on every POST request or only on the
+             * configured URI patterns. The default preserves the optional
+             * honeypot behavior.
+             *
+             * Examples: true, ['/contact', '/newsletter/*']
+             */
+            'strict' => false,
         ],
     ],
 ];

@@ -2,6 +2,7 @@
 
 use Keepsuit\ThreatBlocker\Contracts\StorageDriver;
 use Keepsuit\ThreatBlocker\Detectors\AbuseIpDetector;
+use Keepsuit\ThreatBlocker\Detectors\FormHoneypotDetector;
 use Keepsuit\ThreatBlocker\Middleware\ProtectAgainstThreats;
 use Spatie\Honeypot\EncryptedTime;
 use Spatie\TestTime\TestTime;
@@ -108,6 +109,36 @@ it('blocks form submissions too fast', function () {
 
 it('allows form submissions without honeypot filled', function () {
     config()->set('honeypot.honeypot_fields_required_for_all_forms', true);
+
+    post('/test', [
+        'other' => 'value',
+    ])
+        ->assertOk()
+        ->assertSee('ok');
+});
+
+it('blocks form submissions without honeypot fields in strict mode', function () {
+    config()->set('threat-blocker.detectors.'.FormHoneypotDetector::class.'.strict', true);
+
+    post('/test', [
+        'other' => 'value',
+    ])
+        ->assertOk()
+        ->assertDontSee('ok');
+});
+
+it('blocks form submissions without honeypot fields on strict endpoints', function () {
+    config()->set('threat-blocker.detectors.'.FormHoneypotDetector::class.'.strict', ['/test']);
+
+    post('/test', [
+        'other' => 'value',
+    ])
+        ->assertOk()
+        ->assertDontSee('ok');
+});
+
+it('allows form submissions without honeypot fields outside strict endpoints', function () {
+    config()->set('threat-blocker.detectors.'.FormHoneypotDetector::class.'.strict', ['/contact']);
 
     post('/test', [
         'other' => 'value',
