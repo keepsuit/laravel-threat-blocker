@@ -37,7 +37,13 @@ final class ThreatBlocker
      */
     public function getDetector(string $class): ?Detector
     {
-        return Arr::first($this->detectors, fn (Detector $detector) => $detector instanceof $class);
+        foreach ($this->detectors as $detector) {
+            if ($detector instanceof $class) {
+                return $detector;
+            }
+        }
+
+        return null;
     }
 
     public function getDetectorById(string $id): ?Detector
