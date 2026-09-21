@@ -1,5 +1,6 @@
 <?php
 
+use Illuminate\Support\Facades\Log;
 use Keepsuit\ThreatBlocker\Contracts\StorageDriver;
 use Keepsuit\ThreatBlocker\Detectors\AbuseIpDetector;
 use Keepsuit\ThreatBlocker\Detectors\FormHoneypotDetector;
@@ -119,12 +120,15 @@ it('allows form submissions without honeypot filled', function () {
 
 it('blocks form submissions without honeypot fields in strict mode', function () {
     config()->set('threat-blocker.detectors.'.FormHoneypotDetector::class.'.strict', true);
+    config()->set('honeypot.enabled', false);
 
     post('/test', [
         'other' => 'value',
     ])
         ->assertOk()
         ->assertDontSee('ok');
+
+    expect(config('honeypot.enabled'))->toBeFalse();
 });
 
 it('blocks form submissions without honeypot fields on strict endpoints', function () {
@@ -139,6 +143,24 @@ it('blocks form submissions without honeypot fields on strict endpoints', functi
 
 it('allows form submissions without honeypot fields outside strict endpoints', function () {
     config()->set('threat-blocker.detectors.'.FormHoneypotDetector::class.'.strict', ['/contact']);
+
+    post('/test', [
+        'other' => 'value',
+    ])
+        ->assertOk()
+        ->assertSee('ok');
+});
+
+it('logs invalid strict configuration and keeps the optional behavior', function () {
+    Log::shouldReceive('error')
+        ->once()
+        ->withArgs(fn (string $message, array $context): bool => str_contains(
+            $message,
+            'the strict option must be a boolean or an array of URI patterns',
+        ))
+        ->andReturnNull();
+
+    config()->set('threat-blocker.detectors.'.FormHoneypotDetector::class.'.strict', 'invalid');
 
     post('/test', [
         'other' => 'value',
