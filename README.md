@@ -63,6 +63,21 @@ return [
             ],
         ],
         /**
+         * Block registrations using disposable or undeliverable email domains.
+         */
+        \Keepsuit\ThreatBlocker\Detectors\EmailReputationDetector::class => [
+            'enabled' => env('THREAT_BLOCKER_EMAIL_REPUTATION_DETECTOR_ENABLED', true),
+            // Source URL for the disposable email domain list, one domain per line.
+            'source' => 'https://disposable.github.io/disposable-email-domains/domains.txt',
+            // Empty fields disable this detector. `email` also matches nested terminal fields;
+            // use patterns such as `contacts.*.email` for a specific nested path.
+            'fields' => ['email'],
+            'check_mx' => true,
+            'mx_cache_ttl' => 86400,
+            'blacklist' => [],
+            'whitelist' => [],
+        ],
+        /**
          * Block requests that contain form submissions with honeypot fields filled out.
          * This detector requires spatie/laravel-honeypot package to be installed and configured.
          */
