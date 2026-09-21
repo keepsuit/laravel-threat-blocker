@@ -2,14 +2,11 @@
 
 namespace Keepsuit\ThreatBlocker\Detectors;
 
-use Carbon\CarbonImmutable;
-use Carbon\CarbonInterface;
 use Illuminate\Foundation\Application;
 use Illuminate\Http\Request;
 use Illuminate\Support\Collection;
 use Keepsuit\ThreatBlocker\Contracts\Detector;
 use Keepsuit\ThreatBlocker\Contracts\SourceUpdatable;
-use Keepsuit\ThreatBlocker\Contracts\StorageDriver;
 use Keepsuit\ThreatBlocker\Enums\AbuseIpSource;
 use Keepsuit\ThreatBlocker\Exceptions\ThreatDetectedException;
 use Keepsuit\ThreatBlocker\Support\RemoteListCache;
@@ -35,10 +32,7 @@ class AbuseIpDetector implements Detector, SourceUpdatable
      */
     protected ?array $abuseIpList = null;
 
-    protected ?CarbonInterface $lastUpdatedAt = null;
-
     public function __construct(
-        protected StorageDriver $storage,
         protected RemoteListCache $remoteListCache,
     ) {}
 
@@ -59,7 +53,6 @@ class AbuseIpDetector implements Detector, SourceUpdatable
         );
 
         $this->abuseIpList = null;
-        $this->lastUpdatedAt = CarbonImmutable::now();
     }
 
     protected function getAbuseIpList(): array
@@ -73,10 +66,6 @@ class AbuseIpDetector implements Detector, SourceUpdatable
                 $this->parseAbuseIpDatabase(...),
             );
 
-            $cacheData = $this->storage->get(static::LIST_CACHE_KEY);
-            $this->lastUpdatedAt = is_array($cacheData) && isset($cacheData['updated_at'])
-                ? CarbonImmutable::createFromTimestamp($cacheData['updated_at'])
-                : null;
         }
 
         return $this->abuseIpList;

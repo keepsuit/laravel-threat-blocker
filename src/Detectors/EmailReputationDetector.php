@@ -7,11 +7,10 @@ use Illuminate\Http\Request;
 use Illuminate\Support\Arr;
 use Illuminate\Support\Str;
 use Keepsuit\ThreatBlocker\Contracts\Detector;
-use Keepsuit\ThreatBlocker\Contracts\DnsResolver;
 use Keepsuit\ThreatBlocker\Contracts\SourceUpdatable;
-use Keepsuit\ThreatBlocker\Contracts\StorageDriver;
 use Keepsuit\ThreatBlocker\Enums\EmailReputationSource;
 use Keepsuit\ThreatBlocker\Exceptions\ThreatDetectedException;
+use Keepsuit\ThreatBlocker\Support\MxRecordCache;
 use Keepsuit\ThreatBlocker\Support\RemoteListCache;
 
 class EmailReputationDetector implements Detector, SourceUpdatable
@@ -45,9 +44,8 @@ class EmailReputationDetector implements Detector, SourceUpdatable
     protected ?array $disposableDomains = null;
 
     public function __construct(
-        protected StorageDriver $storage,
         protected RemoteListCache $remoteListCache,
-        protected DnsResolver $dnsResolver,
+        protected MxRecordCache $mxRecordCache,
     ) {}
 
     public function register(Application $app, array $options): void
@@ -153,17 +151,7 @@ class EmailReputationDetector implements Detector, SourceUpdatable
 
     protected function hasMxRecord(string $domain): bool
     {
-        $cacheKey = 'email-reputation-mx-'.sha1($domain);
-        $cached = $this->storage->get($cacheKey);
-
-        if ($cached !== null) {
-            return (bool) $cached;
-        }
-
-        $hasMxRecord = $this->dnsResolver->hasMxRecord($domain);
-        $this->storage->set($cacheKey, $hasMxRecord, $this->mxCacheTtl);
-
-        return $hasMxRecord;
+        return $this->mxRecordCache->hasMxRecord($domain, $this->mxCacheTtl);
     }
 
     /**

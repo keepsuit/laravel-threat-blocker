@@ -51,8 +51,7 @@ test('load cached data with old format', function () {
     $detector = app(ThreatBlocker::class)->getDetector(AbuseIpDetector::class);
 
     expect(invade($detector))
-        ->getAbuseIpList()->toBe([350046382, 350046449, 350103321])
-        ->lastUpdatedAt->toBeNull();
+        ->getAbuseIpList()->toBe([350046382, 350046449, 350103321]);
 });
 
 test('load cached data with new format', function () {
@@ -66,7 +65,5 @@ test('load cached data with new format', function () {
     $detector = app(ThreatBlocker::class)->getDetector(AbuseIpDetector::class);
 
     expect(invade($detector))
-        ->getAbuseIpList()->toBe([350046382, 350046449, 350103321])
-        ->lastUpdatedAt->not->toBeNull()
-        ->lastUpdatedAt->timestamp->toBe($timestamp);
+        ->getAbuseIpList()->toBe([350046382, 350046449, 350103321]);
 });
