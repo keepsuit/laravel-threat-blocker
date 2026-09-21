@@ -1,8 +1,11 @@
 <?php
 
+use Illuminate\Support\Facades\Http;
 use Illuminate\Support\Facades\Log;
+use Keepsuit\ThreatBlocker\Contracts\DnsResolver;
 use Keepsuit\ThreatBlocker\Contracts\StorageDriver;
 use Keepsuit\ThreatBlocker\Detectors\AbuseIpDetector;
+use Keepsuit\ThreatBlocker\Detectors\EmailReputationDetector;
 use Keepsuit\ThreatBlocker\Detectors\FormHoneypotDetector;
 use Keepsuit\ThreatBlocker\Middleware\ProtectAgainstThreats;
 use Spatie\Honeypot\EncryptedTime;
@@ -149,6 +152,52 @@ it('allows form submissions without honeypot fields outside strict endpoints', f
     ])
         ->assertOk()
         ->assertSee('ok');
+});
+
+it('blocks requests with a disposable email domain', function () {
+    config()->set('threat-blocker.detectors', [
+        EmailReputationDetector::class => [
+            'source' => 'https://example.test/disposable-domains.txt',
+            'check_mx' => true,
+        ],
+    ]);
+
+    Http::fake([
+        'https://example.test/disposable-domains.txt' => Http::response("blocked.example\n"),
+    ]);
+
+    post('/test', [
+        'email' => 'user@blocked.example',
+    ])
+        ->assertOk()
+        ->assertDontSee('ok');
+});
+
+it('blocks requests with an email domain without an MX record', function () {
+    config()->set('threat-blocker.detectors', [
+        EmailReputationDetector::class => [
+            'source' => 'https://example.test/disposable-domains.txt',
+            'check_mx' => true,
+        ],
+    ]);
+
+    Http::fake([
+        'https://example.test/disposable-domains.txt' => Http::response("known.example\n"),
+    ]);
+
+    app()->bind(DnsResolver::class, fn () => new class implements DnsResolver
+    {
+        public function hasMxRecord(string $domain): bool
+        {
+            return false;
+        }
+    });
+
+    post('/test', [
+        'email' => 'user@missing-mx.example',
+    ])
+        ->assertOk()
+        ->assertDontSee('ok');
 });
 
 it('logs invalid strict configuration and keeps the optional behavior', function () {

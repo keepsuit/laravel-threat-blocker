@@ -1,8 +1,10 @@
 <?php
 
 use Keepsuit\ThreatBlocker\Detectors\AbuseIpDetector;
+use Keepsuit\ThreatBlocker\Detectors\EmailReputationDetector;
 use Keepsuit\ThreatBlocker\Detectors\FormHoneypotDetector;
 use Keepsuit\ThreatBlocker\Enums\AbuseIpSource;
+use Keepsuit\ThreatBlocker\Enums\EmailReputationSource;
 use Keepsuit\ThreatBlocker\Reponders\BlankPageResponder;
 
 return [
@@ -47,6 +49,24 @@ return [
             'whitelist' => [
                 // These IPs will never be blocked by the AbuseIpDetector
                 '127.0.0.1',
+            ],
+        ],
+        /**
+         * Block registrations using disposable or undeliverable email domains.
+         */
+        EmailReputationDetector::class => [
+            'enabled' => env('THREAT_BLOCKER_EMAIL_REPUTATION_DETECTOR_ENABLED', true),
+            // Source URL for the disposable email domain list, one domain per line.
+            'source' => EmailReputationSource::DisposableEmailDomains->url(),
+            // Empty fields disable this detector. Simple names also match nested input fields.
+            'fields' => ['email'],
+            'check_mx' => true,
+            'mx_cache_ttl' => 86400,
+            'blacklist' => [
+                // These domains will always be blocked by the EmailReputationDetector.
+            ],
+            'whitelist' => [
+                // These domains will never be blocked by the EmailReputationDetector.
             ],
         ],
         /**
