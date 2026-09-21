@@ -68,9 +68,9 @@ return [
          */
         \Keepsuit\ThreatBlocker\Detectors\FormHoneypotDetector::class => [
             'enabled' => env('THREAT_BLOCKER_FORM_HONEYPOT_DETECTOR_ENABLED', true),
-            'required_paths' => [
-                // 'register',
-            ],
+            // Require honeypot fields on every POST request or selected URI patterns.
+            // Examples: true, ['/contact', '/newsletter/*']
+            'strict' => false,
         ],
         /**
          * Block form submissions repeating an identical payload, as a bot filling a static
@@ -92,13 +92,15 @@ return [
 
 By default a submission that does not carry the honeypot fields at all is left alone, because
 requiring them everywhere would reject plain POST endpoints and APIs. A bot posting straight to
-an endpoint, skipping the form, therefore never gets checked. List under `required_paths` the
+an endpoint, skipping the form, therefore never gets checked. Set `strict` to `true`, or list under it the
 paths served by a form that renders the `@honeypot` directive, and on those the fields become
 mandatory:
 
 ```php
-'required_paths' => ['register', 'password/reset'],
+'strict' => ['register', 'password/reset'],
 ```
+
+The legacy `required_paths` option is still accepted as an alias for the URI list.
 
 ### Detecting repeated payloads
 

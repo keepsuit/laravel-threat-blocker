@@ -4,6 +4,8 @@ namespace Keepsuit\ThreatBlocker\Detectors;
 
 use Illuminate\Foundation\Application;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Cache;
+use Illuminate\Support\Facades\Log;
 use Keepsuit\ThreatBlocker\Contracts\Detector;
 use Keepsuit\ThreatBlocker\Exceptions\ThreatDetectedException;
 use Spatie\Honeypot\Exceptions\SpamException;
@@ -11,14 +13,29 @@ use Spatie\Honeypot\SpamProtection;
 
 class FormHoneypotDetector implements Detector
 {
-    /**
-     * @var string[]
-     */
-    protected array $requiredPaths = [];
+    protected bool|array $strict = false;
 
     public function register(Application $app, array $options): void
     {
-        $this->requiredPaths = $options['required_paths'] ?? [];
+        $strict = $options['strict'] ?? false;
+
+        if ($strict === false && isset($options['required_paths'])) {
+            $strict = $options['required_paths'];
+        }
+
+        $this->strict = match (true) {
+            is_bool($strict) => $strict,
+            is_array($strict) => array_values(
+                array_filter($strict, is_string(...)),
+            ),
+            default => tap(
+                false,
+                fn () => Log::error(
+                    'FormHoneypotDetector: the strict option must be a boolean or an array of URI patterns.',
+                    ['type' => get_debug_type($strict)],
+                ),
+            ),
+        };
     }
 
     public function check(Request $request): void
@@ -28,20 +45,57 @@ class FormHoneypotDetector implements Detector
         }
 
         if (! class_exists(SpamProtection::class)) {
+            $cache = Cache::store(config('threat-blocker.storage.cache.store'));
+            $cacheKey = 'threat-blocker:missing-honeypot-dependency';
+
+            if ($cache->add($cacheKey, true, now()->addHour())) {
+                Log::error('FormHoneypotDetector: spatie/laravel-honeypot is not installed; honeypot checks are being skipped.');
+            }
+
             return;
         }
 
-        $oldConfigValue = config('honeypot.honeypot_fields_required_for_all_forms');
+        $oldEnabledValue = config('honeypot.enabled');
+        $oldConfigValue = config(
+            'honeypot.honeypot_fields_required_for_all_forms',
+        );
         try {
-            // Submissions without the honeypot fields are only spam on the forms that render
-            // them: requiring them everywhere would reject plain POST endpoints and APIs.
-            config()->set('honeypot.honeypot_fields_required_for_all_forms', $request->is(...$this->requiredPaths));
+            config()->set('honeypot.enabled', true);
+            config()->set(
+                'honeypot.honeypot_fields_required_for_all_forms',
+                $this->shouldRequireFields($request),
+            );
 
             app(SpamProtection::class)->check($request->all());
         } catch (SpamException) {
-            throw new ThreatDetectedException('Form honeypot detected spam submission.');
+            throw new ThreatDetectedException(
+                'Form honeypot detected spam submission.',
+            );
         } finally {
-            config()->set('honeypot.honeypot_fields_required_for_all_forms', $oldConfigValue);
+            config()->set('honeypot.enabled', $oldEnabledValue);
+            config()->set(
+                'honeypot.honeypot_fields_required_for_all_forms',
+                $oldConfigValue,
+            );
         }
+    }
+
+    protected function shouldRequireFields(Request $request): bool
+    {
+        if ($this->strict === true) {
+            return true;
+        }
+
+        if (! is_array($this->strict)) {
+            return false;
+        }
+
+        foreach ($this->strict as $endpoint) {
+            if ($request->is(ltrim($endpoint, '/'))) {
+                return true;
+            }
+        }
+
+        return false;
     }
 }

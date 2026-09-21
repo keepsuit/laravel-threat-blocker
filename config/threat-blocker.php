@@ -57,13 +57,13 @@ return [
         FormHoneypotDetector::class => [
             'enabled' => env('THREAT_BLOCKER_FORM_HONEYPOT_DETECTOR_ENABLED', true),
             /**
-             * Paths whose submissions must carry the honeypot fields, so that a bot posting
-             * straight to the endpoint is rejected instead of skipping the check.
-             * Only list paths served by a form that renders the @honeypot directive.
+             * Require honeypot fields on every POST request or only on the
+             * configured URI patterns. The default preserves the optional
+             * honeypot behavior.
+             *
+             * Examples: true, ['/contact', '/newsletter/*']
              */
-            'required_paths' => [
-                // 'register',
-            ],
+            'strict' => false,
         ],
         /**
          * Block form submissions repeating an identical payload, as a bot filling a static
