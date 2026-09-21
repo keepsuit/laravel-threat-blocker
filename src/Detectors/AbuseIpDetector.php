@@ -65,7 +65,6 @@ class AbuseIpDetector implements Detector, SourceUpdatable
                 static::class,
                 $this->parseAbuseIpDatabase(...),
             );
-
         }
 
         return $this->abuseIpList;
