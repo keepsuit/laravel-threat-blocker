@@ -4,6 +4,7 @@ use Keepsuit\ThreatBlocker\Detectors\AbuseIpDetector;
 use Keepsuit\ThreatBlocker\Detectors\EmailReputationDetector;
 use Keepsuit\ThreatBlocker\Detectors\FormHoneypotDetector;
 use Keepsuit\ThreatBlocker\Enums\AbuseIpSource;
+use Keepsuit\ThreatBlocker\Enums\EmailReputationSource;
 use Keepsuit\ThreatBlocker\Reponders\BlankPageResponder;
 
 return [
@@ -56,7 +57,7 @@ return [
         EmailReputationDetector::class => [
             'enabled' => env('THREAT_BLOCKER_EMAIL_REPUTATION_DETECTOR_ENABLED', true),
             // Source URL for the disposable email domain list, one domain per line.
-            'source' => EmailReputationDetector::DEFAULT_SOURCE,
+            'source' => EmailReputationSource::DisposableEmailDomains->url(),
             // Empty fields disable this detector. Simple names also match nested input fields.
             'fields' => ['email'],
             'check_mx' => true,

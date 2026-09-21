@@ -10,6 +10,7 @@ use Keepsuit\ThreatBlocker\Contracts\Detector;
 use Keepsuit\ThreatBlocker\Contracts\DnsResolver;
 use Keepsuit\ThreatBlocker\Contracts\SourceUpdatable;
 use Keepsuit\ThreatBlocker\Contracts\StorageDriver;
+use Keepsuit\ThreatBlocker\Enums\EmailReputationSource;
 use Keepsuit\ThreatBlocker\Exceptions\ThreatDetectedException;
 use Keepsuit\ThreatBlocker\Support\RemoteListCache;
 
@@ -17,14 +18,12 @@ class EmailReputationDetector implements Detector, SourceUpdatable
 {
     public const string LIST_CACHE_KEY = 'email-reputation-domains';
 
-    public const string DEFAULT_SOURCE = 'https://disposable.github.io/disposable-email-domains/domains.txt';
-
     /**
      * @var string[]
      */
     protected array $fields = ['email'];
 
-    protected string $sourceUrl = self::DEFAULT_SOURCE;
+    protected string $sourceUrl;
 
     protected bool $checkMx = true;
 
@@ -55,7 +54,7 @@ class EmailReputationDetector implements Detector, SourceUpdatable
     {
         $this->sourceUrl = is_string($options['source'] ?? null)
             ? $options['source']
-            : self::DEFAULT_SOURCE;
+            : EmailReputationSource::DisposableEmailDomains->url();
         $fields = $options['fields'] ?? ['email'];
         $this->fields = is_array($fields)
             ? array_values(array_filter($fields, is_string(...)))

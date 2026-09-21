@@ -5,6 +5,7 @@ use Illuminate\Support\Facades\Http;
 use Keepsuit\ThreatBlocker\Contracts\DnsResolver;
 use Keepsuit\ThreatBlocker\Contracts\StorageDriver;
 use Keepsuit\ThreatBlocker\Detectors\EmailReputationDetector;
+use Keepsuit\ThreatBlocker\Enums\EmailReputationSource;
 use Keepsuit\ThreatBlocker\Exceptions\ThreatDetectedException;
 use Keepsuit\ThreatBlocker\ThreatBlocker;
 
@@ -19,6 +20,17 @@ beforeEach(function () {
     Http::fake([
         'https://example.test/disposable-domains.txt' => Http::response("blocked.example\n"),
     ]);
+});
+
+test('provides built-in email reputation sources', function () {
+    expect(EmailReputationSource::DisposableEmailDomains->url())
+        ->toBe('https://disposable.github.io/disposable-email-domains/domains.txt');
+    expect(EmailReputationSource::Groundcat->url())
+        ->toBe('https://raw.githubusercontent.com/groundcat/disposable-email-domain-list/master/domains.txt');
+    expect(EmailReputationSource::Castle->url())
+        ->toBe('https://raw.githubusercontent.com/castle/disposable-email-domains/master/disposable-email-domains.txt');
+    expect(EmailReputationSource::ValidEmailChecker->url())
+        ->toBe('https://www.validemailchecker.com/disposable-email-domains.txt');
 });
 
 test('registers the email reputation detector', function () {

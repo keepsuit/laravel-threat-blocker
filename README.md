@@ -68,7 +68,7 @@ return [
         \Keepsuit\ThreatBlocker\Detectors\EmailReputationDetector::class => [
             'enabled' => env('THREAT_BLOCKER_EMAIL_REPUTATION_DETECTOR_ENABLED', true),
             // Source URL for the disposable email domain list, one domain per line.
-            'source' => 'https://disposable.github.io/disposable-email-domains/domains.txt',
+            'source' => \Keepsuit\ThreatBlocker\Enums\EmailReputationSource::DisposableEmailDomains->url(),
             // Empty fields disable this detector. `email` also matches nested terminal fields;
             // use patterns such as `contacts.*.email` for a specific nested path.
             'fields' => ['email'],
@@ -90,6 +90,10 @@ return [
     ],
 ];
 ```
+
+`EmailReputationSource` provides built-in disposable-domain list URLs for the default,
+DNS-validated, curated, and high-coverage sources. The `source` option also accepts any
+custom URL serving one domain per line.
 
 ## Usage
 
