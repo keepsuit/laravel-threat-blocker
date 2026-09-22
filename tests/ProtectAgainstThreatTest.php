@@ -5,6 +5,7 @@ use Illuminate\Support\Facades\Log;
 use Keepsuit\ThreatBlocker\Contracts\DnsResolver;
 use Keepsuit\ThreatBlocker\Contracts\StorageDriver;
 use Keepsuit\ThreatBlocker\Detectors\AbuseIpDetector;
+use Keepsuit\ThreatBlocker\Detectors\BotSignatureDetector;
 use Keepsuit\ThreatBlocker\Detectors\EmailReputationDetector;
 use Keepsuit\ThreatBlocker\Detectors\FormHoneypotDetector;
 use Keepsuit\ThreatBlocker\Middleware\ProtectAgainstThreats;
@@ -168,6 +169,18 @@ it('blocks requests with a disposable email domain', function () {
 
     post('/test', [
         'email' => 'user@blocked.example',
+    ])
+        ->assertOk()
+        ->assertDontSee('ok');
+});
+
+it('blocks post requests from known bot user agents', function () {
+    config()->set('threat-blocker.detectors', [
+        BotSignatureDetector::class => [],
+    ]);
+
+    post('/test', [], [
+        'User-Agent' => 'curl/8.10.1',
     ])
         ->assertOk()
         ->assertDontSee('ok');

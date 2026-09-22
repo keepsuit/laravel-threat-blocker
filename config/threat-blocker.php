@@ -1,6 +1,7 @@
 <?php
 
 use Keepsuit\ThreatBlocker\Detectors\AbuseIpDetector;
+use Keepsuit\ThreatBlocker\Detectors\BotSignatureDetector;
 use Keepsuit\ThreatBlocker\Detectors\EmailReputationDetector;
 use Keepsuit\ThreatBlocker\Detectors\FormHoneypotDetector;
 use Keepsuit\ThreatBlocker\Enums\AbuseIpSource;
@@ -68,6 +69,20 @@ return [
             'whitelist' => [
                 // These domains will never be blocked by the EmailReputationDetector.
             ],
+        ],
+        /**
+         * Block POST requests that look like automated form submissions based on their headers.
+         */
+        BotSignatureDetector::class => [
+            'enabled' => env('THREAT_BLOCKER_BOT_SIGNATURE_DETECTOR_ENABLED', true),
+            'rules' => [
+                'missing_user_agent' => true,
+                'known_bot_user_agents' => true,
+                'missing_accept_language' => false,
+                'invalid_referer' => false,
+            ],
+            // Patterns replace the defaults. Use array_merge() to extend them.
+            'user_agent_patterns' => BotSignatureDetector::DEFAULT_USER_AGENT_PATTERNS,
         ],
         /**
          * Block requests that contain form submissions with honeypot fields filled out.
