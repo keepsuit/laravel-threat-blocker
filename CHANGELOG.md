@@ -2,12 +2,6 @@
 
 All notable changes to `laravel-threat-blocker` will be documented in this file.
 
-## Unreleased
-
-### Added
-
-* Add configurable BotSignatureDetector checks for automated POST submissions.
-
 ## 0.1.3 - 2026-09-21
 
 ### What's Changed
