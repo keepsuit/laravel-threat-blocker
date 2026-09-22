@@ -24,10 +24,13 @@ class BotSignatureDetector implements Detector
         '/okhttp/i',
     ];
 
-    /**
-     * @var array<string,bool>
-     */
-    protected array $rules = [];
+    protected bool $missingUserAgent = true;
+
+    protected bool $knownBotUserAgents = true;
+
+    protected bool $missingAcceptLanguage = false;
+
+    protected bool $invalidReferer = false;
 
     /**
      * @var string[]
@@ -40,12 +43,10 @@ class BotSignatureDetector implements Detector
             ? $options['rules']
             : [];
 
-        $this->rules = [
-            'missing_user_agent' => ($rules['missing_user_agent'] ?? true) === true,
-            'known_bot_user_agents' => ($rules['known_bot_user_agents'] ?? true) === true,
-            'missing_accept_language' => ($rules['missing_accept_language'] ?? false) === true,
-            'invalid_referer' => ($rules['invalid_referer'] ?? false) === true,
-        ];
+        $this->missingUserAgent = ($rules['missing_user_agent'] ?? true) === true;
+        $this->knownBotUserAgents = ($rules['known_bot_user_agents'] ?? true) === true;
+        $this->missingAcceptLanguage = ($rules['missing_accept_language'] ?? false) === true;
+        $this->invalidReferer = ($rules['invalid_referer'] ?? false) === true;
 
         $patterns = $options['user_agent_patterns'] ?? self::DEFAULT_USER_AGENT_PATTERNS;
         $patterns = is_array($patterns)
@@ -76,11 +77,11 @@ class BotSignatureDetector implements Detector
 
         $userAgent = trim((string) $request->headers->get('User-Agent', ''));
 
-        if ($this->rules['missing_user_agent'] && $userAgent === '') {
+        if ($this->missingUserAgent && $userAgent === '') {
             throw new ThreatDetectedException('Missing User-Agent detected.');
         }
 
-        if ($this->rules['known_bot_user_agents']) {
+        if ($this->knownBotUserAgents) {
             foreach ($this->userAgentPatterns as $pattern) {
                 if (preg_match($pattern, $userAgent) === 1) {
                     throw new ThreatDetectedException('Known bot User-Agent detected.');
@@ -89,13 +90,13 @@ class BotSignatureDetector implements Detector
         }
 
         if (
-            $this->rules['missing_accept_language']
+            $this->missingAcceptLanguage
             && trim((string) $request->headers->get('Accept-Language', '')) === ''
         ) {
             throw new ThreatDetectedException('Missing Accept-Language detected.');
         }
 
-        if ($this->rules['invalid_referer']) {
+        if ($this->invalidReferer) {
             $referer = trim((string) $request->headers->get('Referer', ''));
             $refererHost = $referer === '' ? null : parse_url($referer, PHP_URL_HOST);
 
