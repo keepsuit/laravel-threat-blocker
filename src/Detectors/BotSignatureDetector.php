@@ -77,8 +77,10 @@ class BotSignatureDetector implements Detector
 
         $userAgent = trim((string) $request->headers->get('User-Agent', ''));
 
-        if ($this->missingUserAgent && $userAgent === '') {
-            throw new ThreatDetectedException('Missing User-Agent detected.');
+        if ($this->missingUserAgent) {
+            if ($userAgent === '') {
+                throw new ThreatDetectedException('Missing User-Agent detected.');
+            }
         }
 
         if ($this->knownBotUserAgents) {
@@ -89,21 +91,18 @@ class BotSignatureDetector implements Detector
             }
         }
 
-        if (
-            $this->missingAcceptLanguage
-            && trim((string) $request->headers->get('Accept-Language', '')) === ''
-        ) {
-            throw new ThreatDetectedException('Missing Accept-Language detected.');
+        if ($this->missingAcceptLanguage) {
+            $acceptLanguageHeader = trim((string) $request->headers->get('Accept-Language', ''));
+            if ($acceptLanguageHeader === '') {
+                throw new ThreatDetectedException('Missing Accept-Language detected.');
+            }
         }
 
         if ($this->invalidReferer) {
-            $referer = trim((string) $request->headers->get('Referer', ''));
-            $refererHost = $referer === '' ? null : parse_url($referer, PHP_URL_HOST);
+            $refererHeader = trim((string) $request->headers->get('Referer', ''));
+            $refererHost = $refererHeader === '' ? null : parse_url($refererHeader, PHP_URL_HOST);
 
-            if (
-                ! is_string($refererHost)
-                || strcasecmp($refererHost, $request->getHost()) !== 0
-            ) {
+            if (! is_string($refererHost) || strcasecmp($refererHost, $request->getHost()) !== 0) {
                 throw new ThreatDetectedException('Invalid Referer detected.');
             }
         }
