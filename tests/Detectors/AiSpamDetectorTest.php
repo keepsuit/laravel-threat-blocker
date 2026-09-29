@@ -75,7 +75,6 @@ test('honors a custom threshold', function () {
 
 test('allows when the provider returns no probabilities', function () {
     useAiSpamOptions();
-    fakeAiCategory([]);
     Classification::fake([
         ['category' => new ChoiceAnswer('spam', [])],
     ])->preventStrayClassifications();
