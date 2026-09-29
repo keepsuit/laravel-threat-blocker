@@ -5,6 +5,7 @@ namespace Keepsuit\ThreatBlocker\Tests;
 use Illuminate\Database\Eloquent\Factories\Factory;
 use Illuminate\Support\Facades\Http;
 use Keepsuit\ThreatBlocker\ThreatBlockerServiceProvider;
+use Laravel\Ai\AiServiceProvider;
 use Orchestra\Testbench\TestCase as Orchestra;
 use Spatie\Honeypot\HoneypotServiceProvider;
 
@@ -26,6 +27,7 @@ class TestCase extends Orchestra
     protected function getPackageProviders($app): array
     {
         return [
+            AiServiceProvider::class,
             HoneypotServiceProvider::class,
             ThreatBlockerServiceProvider::class,
         ];

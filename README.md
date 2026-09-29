@@ -101,6 +101,20 @@ return [
             // Examples: true, ['/contact', '/newsletter/*']
             'strict' => false,
         ],
+        /**
+         * Block POST requests classified as spam or phishing by an AI model.
+         */
+        \Keepsuit\ThreatBlocker\Detectors\AiSpamDetector::class => [
+            'enabled' => env('THREAT_BLOCKER_AI_SPAM_DETECTOR_ENABLED', false),
+            'provider' => env('THREAT_BLOCKER_AI_SPAM_DETECTOR_PROVIDER'),
+            'model' => env('THREAT_BLOCKER_AI_SPAM_DETECTOR_MODEL'),
+            'fields' => ['*'],
+            'only' => [],
+            'context' => [],
+            'threshold' => 0.8,
+            'max_length' => 4000,
+            'timeout' => 5,
+        ],
     ],
 ];
 ```
@@ -121,6 +135,26 @@ The default User-Agent patterns are conservative and available through
 replaces them; extend them with `array_merge()` when needed. Crawler and link-preview
 identities such as Googlebot, bingbot, Slackbot, and Discordbot are intentionally not
 included in the defaults.
+
+`AiSpamDetector` classifies `POST` form data as legitimate, spam or phishing with
+[`laravel/ai`](https://github.com/laravel/ai). It is disabled by default and needs
+`composer require laravel/ai` plus the API key of a provider that supports classification
+(only `typesafe` and `openrouter` do). Every evaluated `POST` adds latency and provider cost,
+so restrict it with `only` and keep it last in the detectors list.
+
+- Form data is sent to the external provider. Files, `_token`, `_method` and password fields
+  are never sent, and the payload is truncated to `max_length` characters.
+- A request is blocked when the spam + phishing probability reaches `threshold`. Providers that
+  return no probabilities never block.
+- On any provider error or timeout the request is allowed and a warning is logged (fail-open).
+- `context` maps URI patterns to extra instructions, appended to the default ones:
+
+```php
+'only' => ['/contact', '/quote/*'],
+'context' => [
+    '/quote/*' => 'This form receives quote requests for industrial machinery.',
+],
+```
 
 ## Usage
 

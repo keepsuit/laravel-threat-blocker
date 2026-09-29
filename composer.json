@@ -22,6 +22,7 @@
     },
     "require-dev": {
         "larastan/larastan": "^3.0",
+        "laravel/ai": "^1.0",
         "laravel/pint": "^1.14",
         "nunomaduro/collision": "^8.8",
         "orchestra/testbench": "^10.8 || ^11.0",
@@ -37,7 +38,8 @@
         "spatie/test-time": "^1.3"
     },
     "suggest": {
-        "spatie/laravel-honeypot": "Required for form honeypot detector"
+        "spatie/laravel-honeypot": "Required for form honeypot detector",
+        "laravel/ai": "Required for AI spam detector"
     },
     "autoload": {
         "psr-4": {
