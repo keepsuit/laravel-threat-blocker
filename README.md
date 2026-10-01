@@ -7,6 +7,7 @@
 
 Laravel Threat Blocker is a package to block threat requests to your Laravel application based on different rules.
 
+
 ## Installation
 
 You can install the package via composer:
@@ -20,6 +21,30 @@ You can publish the config file with:
 ```bash
 php artisan vendor:publish --tag="laravel-threat-blocker-config"
 ```
+
+## Usage
+
+1. Add the `ProtectAgainstThreats` middleware to routes you want to protect:
+
+    ```php
+    use Keepsuit\ThreatBlocker\Middleware\ProtectAgainstThreats;
+    
+    Route::post('contact', [ContactController::class, 'submit'])->middleware(ProtectAgainstThreats::class);
+    ```
+
+2. Run the update command to warm the detectors cache:
+
+    ```bash
+    php artisan threat-blocker:update
+    ```
+
+3. Schedule the update command to run periodically (e.g., daily) using Laravel's task scheduling:
+
+    ```php
+    $schedule->command('threat-blocker:update')->daily();
+    ```
+
+## Configuration
 
 This is the contents of the published config file:
 
@@ -45,10 +70,16 @@ return [
 
     'storage' => [
         'cache' => [
-            'store' => env('THREAT_BLOCKER_CACHE_STORE', env('CACHE_STORE', 'file')),
+            'store' => env('THREAT_BLOCKER_CACHE_STORE', env('CACHE_STORE', env('CACHE_DRIVER', 'file'))),
             'prefix' => env('THREAT_BLOCKER_CACHE_PREFIX', 'threat_blocker'),
         ],
     ],
+
+    /*
+     * The responder class that will be used to respond to detected threats.
+     * You can create your own responder by implementing the Keepsuit\ThreatBlocker\Contracts\ThreatResponder interface.
+     */
+    'responder' => \Keepsuit\ThreatBlocker\Responders\BlankPageResponder::class,
 
     /**
      * The following list of "detectors" will be used to identify threats.
@@ -61,7 +92,7 @@ return [
         \Keepsuit\ThreatBlocker\Detectors\AbuseIpDetector::class => [
             'enabled' => env('THREAT_BLOCKER_ABUSE_IP_DETECTOR_ENABLED', true),
             // Source url for AbuseIP data, it can be a custom url or one of the predefined sources (provided by https://github.com/borestad/blocklist-abuseipdb)
-            'source' => \Keepsuit\ThreatBlocker\Enums\AbuseIpSource::Days30->url(),
+            'source' => \Keepsuit\ThreatBlocker\Enums\AbuseIpSource::Days60->url(),
             'blacklist' => [
                 // These IPs will always be blocked by the AbuseIpDetector
             ],
@@ -127,9 +158,86 @@ return [
 ];
 ```
 
+### Storage
+
+Detectors keep their data (the downloaded lists and the MX lookup results) in a storage driver. The only driver
+is `cache`, which uses a Laravel cache store: set `THREAT_BLOCKER_CACHE_STORE` (it falls back to `CACHE_STORE`)
+and, if needed, `THREAT_BLOCKER_CACHE_PREFIX`. The lists are stored without expiration, so use a persistent
+store shared by all your servers (e.g. `redis` or `database`) and not `array`.
+
+### Responder
+
+The responder decides what a request blocked by a detector receives. The package provides:
+
+- `BlankPageResponder` (default) answers with an empty `200` response.
+- `ForbiddenResponder` aborts with a `403` response.
+
+To customize it, implement `Keepsuit\ThreatBlocker\Contracts\ThreatResponder` and set it as the `responder`.
+`$next` lets the request proceed, which is useful to only monitor threats through the event:
+
+```php
+use Illuminate\Http\Request;
+use Keepsuit\ThreatBlocker\Contracts\ThreatResponder;
+
+class RedirectResponder implements ThreatResponder
+{
+    public function respond(Request $request, \Closure $next): mixed
+    {
+        return redirect()->back()->withErrors('Your request could not be processed.');
+    }
+}
+```
+
+### HTTP methods
+
+Detectors run only on the methods listed in the global `methods` option (default `['POST']`),
+and `*` means any method. Methods are case-insensitive names or `Keepsuit\ThreatBlocker\Enums\HttpMethod` cases. A detector can override it with its own `methods` option:
+
+```php
+'methods' => ['POST'],
+
+'detectors' => [
+    AbuseIpDetector::class => [
+        'methods' => ['*'],
+    ],
+],
+```
+
+`FormHoneypotDetector`, `AiSpamDetector` and `EmailReputationDetector` inspect the request body, so they
+only support `POST`, `PUT` and `PATCH`: any other configured method is ignored. An empty list means the
+detector never runs; use `'enabled' => false` to turn it off.
+
+## Detectors
+
+Detectors run in the order of the `detectors` option, and the first one that detects a threat blocks the request.
+Detectors that download a list (`AbuseIpDetector`, `EmailReputationDetector`) refresh it with
+`php artisan threat-blocker:update`, and in the background when it is older than 3 days.
+
+### AbuseIpDetector
+
+Blocks requests coming from the IPs of the [AbuseIPDB](https://www.abuseipdb.com) blocklist maintained by
+[borestad/blocklist-abuseipdb](https://github.com/borestad/blocklist-abuseipdb).
+
+- `source` is one of the `AbuseIpSource` urls (`Days60`, `Days30`, `Days14`, `Days7`) or a custom url with one IP per line.
+- `blacklist` IPs are always blocked, `whitelist` IPs are never blocked (it wins over the blacklist and the list).
+- The list contains IPv4 addresses only: an IPv6 address is blocked just when it is in `blacklist`.
+
+It does not read the request body, so it can run on any method: set `'methods' => ['*']` to check them all.
+
+### EmailReputationDetector
+
+Blocks registrations using disposable or undeliverable email domains. It reads the request body.
+
 `EmailReputationSource` provides built-in disposable-domain list URLs for the default,
 DNS-validated, curated, and high-coverage sources. The `source` option also accepts any
 custom URL serving one domain per line.
+
+- `fields` are the input fields to check. An empty list disables the detector. `email` also matches nested fields
+  with that name, use patterns such as `contacts.*.email` for a specific nested path.
+- `blacklist` domains are always blocked, `whitelist` domains are never blocked.
+- `check_mx` blocks domains without an MX record, the DNS result is cached for `mx_cache_ttl` seconds.
+
+### BotSignatureDetector
 
 `BotSignatureDetector` reads only the request headers, so it can run on any method. Each configured rule is independent:
 
@@ -143,6 +251,18 @@ The default User-Agent patterns are conservative and available through
 replaces them; extend them with `array_merge()` when needed. Crawler and link-preview
 identities such as Googlebot, bingbot, Slackbot, and Discordbot are intentionally not
 included in the defaults.
+
+### FormHoneypotDetector
+
+Blocks form submissions with a filled honeypot field (or, if `valid_from_timestamp` is enabled in the Spatie config, submitted too fast). It reads the request body and
+needs [spatie/laravel-honeypot](https://github.com/spatie/laravel-honeypot) installed and its component added to
+your forms; without it the check is skipped and a warning is logged.
+
+- The check runs even if `honeypot.enabled` is `false` in the Spatie config.
+- `strict` => `false` (default) checks only requests that contain the honeypot fields, `true` also blocks requests
+  without them, and a list of URI patterns (e.g. `['/contact', '/newsletter/*']`) requires them only there.
+
+### AiSpamDetector
 
 `AiSpamDetector` classifies form data as legitimate, spam or phishing with
 [`laravel/ai`](https://github.com/laravel/ai). It is disabled by default and needs
@@ -169,26 +289,7 @@ Models verified with the live tests on OpenRouter: `~typesafe/jev-latest`, `ince
 Tested but not recommended: `togethercomputer/tev1-4b-experimental` and `jaredpalmer/kev-4b` fail some live tests or score close to the `threshold`.
 `respan/span-01` and `respan/span-01-lite` do not work: they only support Noul (yes/no) questions and return an error for the `Choice` question the detector asks.
 
-## HTTP methods
-
-Detectors run only on the methods listed in the global `methods` option (default `['POST']`),
-and `*` means any method. Methods are case-insensitive names or `Keepsuit\ThreatBlocker\Enums\HttpMethod` cases. A detector can override it with its own `methods` option:
-
-```php
-'methods' => ['POST'],
-
-'detectors' => [
-    AbuseIpDetector::class => [
-        'methods' => ['*'],
-    ],
-],
-```
-
-`FormHoneypotDetector`, `AiSpamDetector` and `EmailReputationDetector` inspect the request body, so they
-only support `POST`, `PUT` and `PATCH`: any other configured method is ignored. An empty list means the
-detector never runs; use `'enabled' => false` to turn it off.
-
-## Detections
+## Events and logging
 
 Detectors report a threat by throwing `ThreatDetectedException`, which exposes the `detectorId`
 (e.g. `bot-signature`) and a `context` array with details about the detection. The message is prefixed with
@@ -214,28 +315,6 @@ Event::listen(function (ThreatDetectedEvent $event) {
     ]);
 });
 ```
-
-## Usage
-
-1. Add the `ProtectAgainstThreats` middleware to routes you want to protect:
-
-    ```php
-    use Keepsuit\ThreatBlocker\Middleware\ProtectAgainstThreats;
-    
-    Route::post('contact', [ContactController::class, 'submit'])->middleware(ProtectAgainstThreats::class);
-    ```
-
-2. Run the update command to warm the detectors cache:
-
-    ```bash
-    php artisan threat-blocker:update
-    ```
-
-3. Schedule the update command to run periodically (e.g., daily) using Laravel's task scheduling:
-
-    ```php
-    $schedule->command('threat-blocker:update')->daily();
-    ```
 
 ## Testing
 
