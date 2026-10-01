@@ -10,19 +10,19 @@ use Keepsuit\ThreatBlocker\Contracts\DnsResolver;
 use Keepsuit\ThreatBlocker\Contracts\SourceUpdatable;
 use Keepsuit\ThreatBlocker\Contracts\StorageDriver;
 use Keepsuit\ThreatBlocker\Enums\EmailReputationSource;
+use Keepsuit\ThreatBlocker\Enums\HttpMethod;
 use Keepsuit\ThreatBlocker\Exceptions\ThreatDetectedException;
 use Keepsuit\ThreatBlocker\Support\InputFields;
 use Keepsuit\ThreatBlocker\Support\RemoteListCache;
-use Keepsuit\ThreatBlocker\Support\RequestMethods;
 
 class EmailReputationDetector implements Detector, SourceUpdatable
 {
     public const string LIST_CACHE_KEY = 'email-reputation-domains';
 
     /**
-     * @var string[]
+     * @var HttpMethod[]
      */
-    protected array $methods = RequestMethods::DEFAULT;
+    protected array $methods = HttpMethod::DEFAULT;
 
     /**
      * @var string[]
@@ -63,7 +63,7 @@ class EmailReputationDetector implements Detector, SourceUpdatable
 
     public function register(Application $app, array $options): void
     {
-        $this->methods = RequestMethods::resolve($options, bodyOnly: true);
+        $this->methods = HttpMethod::fromOptions($options, bodyOnly: true);
         $this->sourceUrl = is_string($options['source'] ?? null)
             ? $options['source']
             : EmailReputationSource::DisposableEmailDomains->url();
@@ -92,7 +92,7 @@ class EmailReputationDetector implements Detector, SourceUpdatable
 
     public function check(Request $request): void
     {
-        if (! RequestMethods::matches($this->methods, $request)) {
+        if (! HttpMethod::matches($this->methods, $request)) {
             return;
         }
 

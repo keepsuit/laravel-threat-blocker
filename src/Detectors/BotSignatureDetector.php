@@ -6,8 +6,8 @@ use Illuminate\Foundation\Application;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Log;
 use Keepsuit\ThreatBlocker\Contracts\Detector;
+use Keepsuit\ThreatBlocker\Enums\HttpMethod;
 use Keepsuit\ThreatBlocker\Exceptions\ThreatDetectedException;
-use Keepsuit\ThreatBlocker\Support\RequestMethods;
 
 class BotSignatureDetector implements Detector
 {
@@ -26,9 +26,9 @@ class BotSignatureDetector implements Detector
     ];
 
     /**
-     * @var string[]
+     * @var HttpMethod[]
      */
-    protected array $methods = RequestMethods::DEFAULT;
+    protected array $methods = HttpMethod::DEFAULT;
 
     protected bool $missingUserAgent = true;
 
@@ -50,7 +50,7 @@ class BotSignatureDetector implements Detector
 
     public function register(Application $app, array $options): void
     {
-        $this->methods = RequestMethods::resolve($options);
+        $this->methods = HttpMethod::fromOptions($options);
 
         $rules = is_array($options['rules'] ?? null)
             ? $options['rules']
@@ -84,7 +84,7 @@ class BotSignatureDetector implements Detector
 
     public function check(Request $request): void
     {
-        if (! RequestMethods::matches($this->methods, $request)) {
+        if (! HttpMethod::matches($this->methods, $request)) {
             return;
         }
 

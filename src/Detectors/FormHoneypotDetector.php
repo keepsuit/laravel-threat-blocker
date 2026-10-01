@@ -6,17 +6,17 @@ use Illuminate\Foundation\Application;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Log;
 use Keepsuit\ThreatBlocker\Contracts\Detector;
+use Keepsuit\ThreatBlocker\Enums\HttpMethod;
 use Keepsuit\ThreatBlocker\Exceptions\ThreatDetectedException;
-use Keepsuit\ThreatBlocker\Support\RequestMethods;
 use Spatie\Honeypot\Exceptions\SpamException;
 use Spatie\Honeypot\SpamProtection;
 
 class FormHoneypotDetector implements Detector
 {
     /**
-     * @var string[]
+     * @var HttpMethod[]
      */
-    protected array $methods = RequestMethods::DEFAULT;
+    protected array $methods = HttpMethod::DEFAULT;
 
     protected bool|array $strict = false;
 
@@ -27,7 +27,7 @@ class FormHoneypotDetector implements Detector
 
     public function register(Application $app, array $options): void
     {
-        $this->methods = RequestMethods::resolve($options, bodyOnly: true);
+        $this->methods = HttpMethod::fromOptions($options, bodyOnly: true);
 
         $strict = $options['strict'] ?? false;
 
@@ -48,7 +48,7 @@ class FormHoneypotDetector implements Detector
 
     public function check(Request $request): void
     {
-        if (! RequestMethods::matches($this->methods, $request)) {
+        if (! HttpMethod::matches($this->methods, $request)) {
             return;
         }
 

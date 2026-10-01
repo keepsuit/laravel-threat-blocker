@@ -8,9 +8,9 @@ use Illuminate\Support\Arr;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Str;
 use Keepsuit\ThreatBlocker\Contracts\Detector;
+use Keepsuit\ThreatBlocker\Enums\HttpMethod;
 use Keepsuit\ThreatBlocker\Exceptions\ThreatDetectedException;
 use Keepsuit\ThreatBlocker\Support\InputFields;
-use Keepsuit\ThreatBlocker\Support\RequestMethods;
 use Laravel\Ai\Classification;
 use Laravel\Ai\Classification\Choice;
 use Laravel\Ai\Responses\Data\ChoiceAnswer;
@@ -28,9 +28,9 @@ class AiSpamDetector implements Detector
     public const array EXCLUDED_FIELDS = ['_token', '_method', 'password', 'password_confirmation', 'current_password'];
 
     /**
-     * @var string[]
+     * @var HttpMethod[]
      */
-    protected array $methods = RequestMethods::DEFAULT;
+    protected array $methods = HttpMethod::DEFAULT;
 
     /**
      * @var string[]
@@ -64,7 +64,7 @@ class AiSpamDetector implements Detector
 
     public function register(Application $app, array $options): void
     {
-        $this->methods = RequestMethods::resolve($options, bodyOnly: true);
+        $this->methods = HttpMethod::fromOptions($options, bodyOnly: true);
 
         $fields = $options['fields'] ?? ['*'];
         $this->fields = is_array($fields)
@@ -90,7 +90,7 @@ class AiSpamDetector implements Detector
 
     public function check(Request $request): void
     {
-        if (! RequestMethods::matches($this->methods, $request) || $this->fields === []) {
+        if (! HttpMethod::matches($this->methods, $request) || $this->fields === []) {
             return;
         }
 

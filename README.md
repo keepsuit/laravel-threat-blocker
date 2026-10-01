@@ -36,7 +36,7 @@ return [
     'log' => env('THREAT_BLOCKER_LOG_ENABLED', false),
 
     /**
-     * HTTP methods checked by the detectors, '*' means any method.
+     * HTTP methods checked by the detectors (names or HttpMethod cases), '*' means any method.
      * Each detector can override it with its own 'methods' option.
      * Detectors that inspect the request body (FormHoneypotDetector, AiSpamDetector,
      * EmailReputationDetector) only support POST, PUT and PATCH, other methods are ignored.
@@ -177,7 +177,7 @@ Tested but not recommended: `togethercomputer/tev1-4b-experimental` and `jaredpa
 ## HTTP methods
 
 Detectors run only on the methods listed in the global `methods` option (default `['POST']`),
-and `*` means any method. A detector can override it with its own `methods` option:
+and `*` means any method. Methods are case-insensitive names or `Keepsuit\ThreatBlocker\Enums\HttpMethod` cases. A detector can override it with its own `methods` option:
 
 ```php
 'methods' => ['POST'],

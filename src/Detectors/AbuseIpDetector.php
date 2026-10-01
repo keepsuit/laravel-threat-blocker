@@ -8,9 +8,9 @@ use Illuminate\Support\Collection;
 use Keepsuit\ThreatBlocker\Contracts\Detector;
 use Keepsuit\ThreatBlocker\Contracts\SourceUpdatable;
 use Keepsuit\ThreatBlocker\Enums\AbuseIpSource;
+use Keepsuit\ThreatBlocker\Enums\HttpMethod;
 use Keepsuit\ThreatBlocker\Exceptions\ThreatDetectedException;
 use Keepsuit\ThreatBlocker\Support\RemoteListCache;
-use Keepsuit\ThreatBlocker\Support\RequestMethods;
 
 class AbuseIpDetector implements Detector, SourceUpdatable
 {
@@ -29,9 +29,9 @@ class AbuseIpDetector implements Detector, SourceUpdatable
     protected array $whitelistIps;
 
     /**
-     * @var string[]
+     * @var HttpMethod[]
      */
-    protected array $methods = RequestMethods::DEFAULT;
+    protected array $methods = HttpMethod::DEFAULT;
 
     /**
      * @var int[]|null
@@ -49,7 +49,7 @@ class AbuseIpDetector implements Detector, SourceUpdatable
 
     public function register(Application $app, array $options): void
     {
-        $this->methods = RequestMethods::resolve($options);
+        $this->methods = HttpMethod::fromOptions($options);
         $this->sourceUrl = $options['source'] ?? AbuseIpSource::Days60->url();
         $this->blacklistIps = $options['blacklist'] ?? [];
         $this->whitelistIps = $options['whitelist'] ?? ['127.0.0.1'];
@@ -103,7 +103,7 @@ class AbuseIpDetector implements Detector, SourceUpdatable
     {
         $ip = $request->ip();
 
-        if ($ip === null || ! RequestMethods::matches($this->methods, $request)) {
+        if ($ip === null || ! HttpMethod::matches($this->methods, $request)) {
             return;
         }
 
