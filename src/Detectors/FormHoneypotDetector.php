@@ -7,15 +7,24 @@ use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Log;
 use Keepsuit\ThreatBlocker\Contracts\Detector;
 use Keepsuit\ThreatBlocker\Exceptions\ThreatDetectedException;
+use Keepsuit\ThreatBlocker\Support\RequestMethods;
+use Keepsuit\ThreatBlocker\ThreatBlocker;
 use Spatie\Honeypot\Exceptions\SpamException;
 use Spatie\Honeypot\SpamProtection;
 
 class FormHoneypotDetector implements Detector
 {
+    /**
+     * @var string[]
+     */
+    protected array $methods = RequestMethods::DEFAULT;
+
     protected bool|array $strict = false;
 
     public function register(Application $app, array $options): void
     {
+        $this->methods = RequestMethods::resolve($options, bodyOnly: true);
+
         $strict = $options['strict'] ?? false;
 
         $this->strict = match (true) {
@@ -35,7 +44,7 @@ class FormHoneypotDetector implements Detector
 
     public function check(Request $request): void
     {
-        if (! $request->isMethod('POST')) {
+        if (! RequestMethods::matches($this->methods, $request)) {
             return;
         }
 
@@ -61,6 +70,7 @@ class FormHoneypotDetector implements Detector
             app(SpamProtection::class)->check($request->all());
         } catch (SpamException) {
             throw new ThreatDetectedException(
+                ThreatBlocker::idFor(static::class),
                 'Form honeypot detected spam submission.',
             );
         } finally {

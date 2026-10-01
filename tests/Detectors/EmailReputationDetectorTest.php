@@ -206,3 +206,27 @@ test('skips email checks when no fields are configured', function () {
         'email' => 'user@blocked.example',
     ])))->not->toThrow(ThreatDetectedException::class);
 });
+
+test('exposes the domain and reason in the exception context', function () {
+    $detector = app(ThreatBlocker::class)->getDetector(EmailReputationDetector::class);
+
+    try {
+        $detector?->check(Request::create('/register', 'POST', ['email' => 'user@blocked.example']));
+    } catch (ThreatDetectedException $e) {
+        expect($e->getMessage())->toBe('[email-reputation] Disposable email domain detected.')
+            ->and($e->context)->toBe(['domain' => 'blocked.example', 'reason' => 'disposable']);
+
+        return;
+    }
+
+    $this->fail('Expected ThreatDetectedException');
+});
+
+test('skips email checks on methods without a body', function () {
+    config()->set('threat-blocker.detectors.'.EmailReputationDetector::class.'.methods', ['GET']);
+
+    $detector = app(ThreatBlocker::class)->getDetector(EmailReputationDetector::class);
+
+    expect(fn () => $detector?->check(Request::create('/register', 'GET', ['email' => 'user@blocked.example'])))
+        ->not->toThrow(ThreatDetectedException::class);
+});

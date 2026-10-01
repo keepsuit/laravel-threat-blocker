@@ -13,10 +13,17 @@ use Keepsuit\ThreatBlocker\Enums\EmailReputationSource;
 use Keepsuit\ThreatBlocker\Exceptions\ThreatDetectedException;
 use Keepsuit\ThreatBlocker\Support\InputFields;
 use Keepsuit\ThreatBlocker\Support\RemoteListCache;
+use Keepsuit\ThreatBlocker\Support\RequestMethods;
+use Keepsuit\ThreatBlocker\ThreatBlocker;
 
 class EmailReputationDetector implements Detector, SourceUpdatable
 {
     public const string LIST_CACHE_KEY = 'email-reputation-domains';
+
+    /**
+     * @var string[]
+     */
+    protected array $methods = RequestMethods::DEFAULT;
 
     /**
      * @var string[]
@@ -52,6 +59,7 @@ class EmailReputationDetector implements Detector, SourceUpdatable
 
     public function register(Application $app, array $options): void
     {
+        $this->methods = RequestMethods::resolve($options, bodyOnly: true);
         $this->sourceUrl = is_string($options['source'] ?? null)
             ? $options['source']
             : EmailReputationSource::DisposableEmailDomains->url();
@@ -80,6 +88,10 @@ class EmailReputationDetector implements Detector, SourceUpdatable
 
     public function check(Request $request): void
     {
+        if (! RequestMethods::matches($this->methods, $request)) {
+            return;
+        }
+
         foreach ($this->emailCandidates($request) as $email) {
             $domain = $this->emailDomain($email);
 
@@ -88,17 +100,26 @@ class EmailReputationDetector implements Detector, SourceUpdatable
             }
 
             if (in_array($domain, $this->blacklistDomains, true)) {
-                throw new ThreatDetectedException('Blacklisted email domain detected.');
+                throw $this->threat('Blacklisted email domain detected.', $domain, 'blacklisted');
             }
 
             if (in_array($domain, $this->getDisposableDomains(), true)) {
-                throw new ThreatDetectedException('Disposable email domain detected.');
+                throw $this->threat('Disposable email domain detected.', $domain, 'disposable');
             }
 
             if ($this->checkMx && ! $this->hasMxRecord($domain)) {
-                throw new ThreatDetectedException('Email domain has no MX record.');
+                throw $this->threat('Email domain has no MX record.', $domain, 'no_mx');
             }
         }
+    }
+
+    protected function threat(string $message, string $domain, string $reason): ThreatDetectedException
+    {
+        return new ThreatDetectedException(
+            ThreatBlocker::idFor(static::class),
+            $message,
+            ['domain' => $domain, 'reason' => $reason],
+        );
     }
 
     /**

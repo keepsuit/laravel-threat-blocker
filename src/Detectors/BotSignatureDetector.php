@@ -7,6 +7,8 @@ use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Log;
 use Keepsuit\ThreatBlocker\Contracts\Detector;
 use Keepsuit\ThreatBlocker\Exceptions\ThreatDetectedException;
+use Keepsuit\ThreatBlocker\Support\RequestMethods;
+use Keepsuit\ThreatBlocker\ThreatBlocker;
 
 class BotSignatureDetector implements Detector
 {
@@ -24,6 +26,11 @@ class BotSignatureDetector implements Detector
         '/okhttp/i',
     ];
 
+    /**
+     * @var string[]
+     */
+    protected array $methods = RequestMethods::DEFAULT;
+
     protected bool $missingUserAgent = true;
 
     protected bool $knownBotUserAgents = true;
@@ -39,6 +46,8 @@ class BotSignatureDetector implements Detector
 
     public function register(Application $app, array $options): void
     {
+        $this->methods = RequestMethods::resolve($options);
+
         $rules = is_array($options['rules'] ?? null)
             ? $options['rules']
             : [];
@@ -71,7 +80,7 @@ class BotSignatureDetector implements Detector
 
     public function check(Request $request): void
     {
-        if (! $request->isMethod('POST')) {
+        if (! RequestMethods::matches($this->methods, $request)) {
             return;
         }
 
@@ -79,14 +88,14 @@ class BotSignatureDetector implements Detector
 
         if ($this->missingUserAgent) {
             if ($userAgent === '') {
-                throw new ThreatDetectedException('Missing User-Agent detected.');
+                throw new ThreatDetectedException(ThreatBlocker::idFor(static::class), 'Missing User-Agent detected.');
             }
         }
 
         if ($this->knownBotUserAgents) {
             foreach ($this->userAgentPatterns as $pattern) {
                 if (preg_match($pattern, $userAgent) === 1) {
-                    throw new ThreatDetectedException('Known bot User-Agent detected.');
+                    throw new ThreatDetectedException(ThreatBlocker::idFor(static::class), 'Known bot User-Agent detected.');
                 }
             }
         }
@@ -94,7 +103,7 @@ class BotSignatureDetector implements Detector
         if ($this->missingAcceptLanguage) {
             $acceptLanguageHeader = trim((string) $request->headers->get('Accept-Language', ''));
             if ($acceptLanguageHeader === '') {
-                throw new ThreatDetectedException('Missing Accept-Language detected.');
+                throw new ThreatDetectedException(ThreatBlocker::idFor(static::class), 'Missing Accept-Language detected.');
             }
         }
 
@@ -103,7 +112,7 @@ class BotSignatureDetector implements Detector
             $refererHost = $refererHeader === '' ? null : parse_url($refererHeader, PHP_URL_HOST);
 
             if (! is_string($refererHost) || strcasecmp($refererHost, $request->getHost()) !== 0) {
-                throw new ThreatDetectedException('Invalid Referer detected.');
+                throw new ThreatDetectedException(ThreatBlocker::idFor(static::class), 'Invalid Referer detected.');
             }
         }
     }

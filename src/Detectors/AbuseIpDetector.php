@@ -10,6 +10,8 @@ use Keepsuit\ThreatBlocker\Contracts\SourceUpdatable;
 use Keepsuit\ThreatBlocker\Enums\AbuseIpSource;
 use Keepsuit\ThreatBlocker\Exceptions\ThreatDetectedException;
 use Keepsuit\ThreatBlocker\Support\RemoteListCache;
+use Keepsuit\ThreatBlocker\Support\RequestMethods;
+use Keepsuit\ThreatBlocker\ThreatBlocker;
 
 class AbuseIpDetector implements Detector, SourceUpdatable
 {
@@ -28,6 +30,11 @@ class AbuseIpDetector implements Detector, SourceUpdatable
     protected array $whitelistIps;
 
     /**
+     * @var string[]
+     */
+    protected array $methods = RequestMethods::DEFAULT;
+
+    /**
      * @var int[]|null
      */
     protected ?array $abuseIpList = null;
@@ -38,6 +45,7 @@ class AbuseIpDetector implements Detector, SourceUpdatable
 
     public function register(Application $app, array $options): void
     {
+        $this->methods = RequestMethods::resolve($options);
         $this->sourceUrl = $options['source'] ?? AbuseIpSource::Days60->url();
         $this->blacklistIps = $options['blacklist'] ?? [];
         $this->whitelistIps = $options['whitelist'] ?? ['127.0.0.1'];
@@ -91,7 +99,7 @@ class AbuseIpDetector implements Detector, SourceUpdatable
     {
         $ip = $request->ip();
 
-        if ($ip === null) {
+        if ($ip === null || ! RequestMethods::matches($this->methods, $request)) {
             return;
         }
 
@@ -100,7 +108,7 @@ class AbuseIpDetector implements Detector, SourceUpdatable
         }
 
         if (in_array($ip, $this->blacklistIps, true)) {
-            throw new ThreatDetectedException('Blacklisted IP detected.');
+            throw new ThreatDetectedException(ThreatBlocker::idFor(static::class), 'Blacklisted IP detected.');
         }
 
         $longIp = ip2long($ip);
@@ -109,7 +117,7 @@ class AbuseIpDetector implements Detector, SourceUpdatable
         }
 
         if (in_array($longIp, $this->getAbuseIpList(), true)) {
-            throw new ThreatDetectedException('AbuseIP database match detected.');
+            throw new ThreatDetectedException(ThreatBlocker::idFor(static::class), 'AbuseIP database match detected.');
         }
     }
 }

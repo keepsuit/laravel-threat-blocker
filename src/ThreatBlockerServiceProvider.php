@@ -45,7 +45,8 @@ class ThreatBlockerServiceProvider extends PackageServiceProvider
 
         $this->app->scoped(ThreatBlocker::class, function (Application $app) {
             $threatBlocker = new ThreatBlocker(
-                config('threat-blocker.enabled', true)
+                config('threat-blocker.enabled', true),
+                config('threat-blocker.log', false),
             );
 
             foreach (config('threat-blocker.detectors') as $key => $options) {
@@ -63,7 +64,10 @@ class ThreatBlockerServiceProvider extends PackageServiceProvider
                     continue;
                 }
 
-                $detector->register($app, is_array($options) ? $options : []);
+                $options = is_array($options) ? $options : [];
+                $options['methods'] ??= config('threat-blocker.methods');
+
+                $detector->register($app, $options);
 
                 $threatBlocker->addDetector($detector);
             }

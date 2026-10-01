@@ -15,11 +15,17 @@ final class ThreatBlocker
 
     public function __construct(
         public bool $enabled = true,
+        public bool $logging = false,
     ) {}
 
     public function enabled(): bool
     {
         return $this->enabled;
+    }
+
+    public function logging(): bool
+    {
+        return $this->logging;
     }
 
     public function addDetector(Detector $detector): ThreatBlocker
@@ -61,9 +67,17 @@ final class ThreatBlocker
 
     public function detectorId(Detector $detector): string
     {
-        return Str::of(class_basename($detector))
-            ->rtrim('Detector')
-            ->slug()
+        return self::idFor($detector::class);
+    }
+
+    /**
+     * @param  class-string<Detector>  $class
+     */
+    public static function idFor(string $class): string
+    {
+        return Str::of(class_basename($class))
+            ->chopEnd('Detector')
+            ->kebab()
             ->toString();
     }
 }

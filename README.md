@@ -31,6 +31,19 @@ return [
     'enabled' => env('THREAT_BLOCKER_ENABLED', true),
 
     /**
+     * Log a warning when a threat is detected.
+     */
+    'log' => env('THREAT_BLOCKER_LOG_ENABLED', false),
+
+    /**
+     * HTTP methods checked by the detectors, '*' means any method.
+     * Each detector can override it with its own 'methods' option.
+     * Detectors that inspect the request body (FormHoneypotDetector, AiSpamDetector,
+     * EmailReputationDetector) only support POST, PUT and PATCH, other methods are ignored.
+     */
+    'methods' => ['POST'],
+
+    /**
      * Storage driver to use for caching detectors data.
      */
     'storage_driver' => env('THREAT_BLOCKER_STORAGE_DRIVER', 'cache'),
@@ -123,7 +136,7 @@ return [
 DNS-validated, curated, and high-coverage sources. The `source` option also accepts any
 custom URL serving one domain per line.
 
-`BotSignatureDetector` checks only `POST` requests. Each configured rule is independent:
+`BotSignatureDetector` reads only the request headers, so it can run on any method. Each configured rule is independent:
 
 - `missing_user_agent` blocks missing or blank User-Agent headers.
 - `known_bot_user_agents` matches the configurable case-insensitive PCRE patterns.
@@ -136,10 +149,10 @@ replaces them; extend them with `array_merge()` when needed. Crawler and link-pr
 identities such as Googlebot, bingbot, Slackbot, and Discordbot are intentionally not
 included in the defaults.
 
-`AiSpamDetector` classifies `POST` form data as legitimate, spam or phishing with
+`AiSpamDetector` classifies form data as legitimate, spam or phishing with
 [`laravel/ai`](https://github.com/laravel/ai). It is disabled by default and needs
 `composer require laravel/ai` plus the API key of a provider that supports classification
-(only `typesafe` and `openrouter` do). Every evaluated `POST` adds latency and provider cost,
+(only `typesafe` and `openrouter` do). Every evaluated request adds latency and provider cost,
 so restrict it with `only` and keep it last in the detectors list.
 
 - Form data is sent to the external provider. Files, `_token`, `_method` and password fields
@@ -160,6 +173,37 @@ Models verified with the live tests on OpenRouter: `~typesafe/jev-latest`, `ince
 
 Tested but not recommended: `togethercomputer/tev1-4b-experimental` and `jaredpalmer/kev-4b` fail some live tests or score close to the `threshold`.
 `respan/span-01` and `respan/span-01-lite` do not work: they only support Noul (yes/no) questions and return an error for the `Choice` question the detector asks.
+
+## HTTP methods
+
+Detectors run only on the methods listed in the global `methods` option (default `['POST']`),
+and `*` means any method. A detector can override it with its own `methods` option:
+
+```php
+'methods' => ['POST'],
+
+'detectors' => [
+    AbuseIpDetector::class => [
+        'methods' => ['*'],
+    ],
+],
+```
+
+`FormHoneypotDetector`, `AiSpamDetector` and `EmailReputationDetector` inspect the request body, so they
+only support `POST`, `PUT` and `PATCH`: any other configured method is ignored. An empty list means the
+detector never runs; use `'enabled' => false` to turn it off.
+
+## Detections
+
+Detectors report a threat by throwing `ThreatDetectedException`, which exposes the `detectorId`
+(e.g. `bot-signature`) and a `context` array with details about the detection. The message is prefixed with
+the detector id (`[bot-signature] Known bot User-Agent detected.`).
+
+The `ThreatDetectedEvent` event carries the `request` and the `exception`. Detectors put in the
+context only derived values (category, score, domain), never request content or full email addresses.
+
+Set `THREAT_BLOCKER_LOG_ENABLED=true` to log every detection as a warning with the request method, path, IP
+and the exception context.
 
 ## Usage
 

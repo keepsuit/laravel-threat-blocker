@@ -9,7 +9,6 @@ class ThreatDetectedEvent
 {
     public function __construct(
         public Request $request,
-        public string $detectorId,
         public ThreatDetectedException $exception
     ) {}
 }

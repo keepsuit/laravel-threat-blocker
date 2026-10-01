@@ -45,6 +45,18 @@ test('skips bot signature checks for non-post requests', function () {
         ->not->toThrow(ThreatDetectedException::class);
 });
 
+test('checks bot signatures on any configured method', function () {
+    config()->set('threat-blocker.detectors', [
+        BotSignatureDetector::class => ['methods' => ['*']],
+    ]);
+
+    $request = Request::create('/contact', 'GET');
+    $request->headers->set('User-Agent', 'curl/8.10.1');
+
+    expect(fn () => botSignatureDetector()->check($request))
+        ->toThrow(ThreatDetectedException::class, '[bot-signature] Known bot User-Agent detected.');
+});
+
 test('blocks a missing user agent by default', function () {
     $request = Request::create('/contact', 'POST');
     $request->headers->remove('User-Agent');

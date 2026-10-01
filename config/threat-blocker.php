@@ -16,6 +16,19 @@ return [
     'enabled' => env('THREAT_BLOCKER_ENABLED', true),
 
     /**
+     * Log a warning when a threat is detected.
+     */
+    'log' => env('THREAT_BLOCKER_LOG_ENABLED', false),
+
+    /**
+     * HTTP methods checked by the detectors, '*' means any method.
+     * Each detector can override it with its own 'methods' option.
+     * Detectors that inspect the request body (FormHoneypotDetector, AiSpamDetector,
+     * EmailReputationDetector) only support POST, PUT and PATCH, other methods are ignored.
+     */
+    'methods' => ['POST'],
+
+    /**
      * Storage driver to use for caching detectors data.
      */
     'storage_driver' => env('THREAT_BLOCKER_STORAGE_DRIVER', 'cache'),
