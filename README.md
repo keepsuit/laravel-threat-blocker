@@ -111,7 +111,7 @@ return [
             'fields' => ['*'],
             'only' => [],
             'context' => [],
-            'threshold' => 0.8,
+            'threshold' => env('THREAT_BLOCKER_AI_SPAM_DETECTOR_THRESHOLD', 0.8),
             'max_length' => 4000,
             'timeout' => 5,
         ],
@@ -158,6 +158,9 @@ so restrict it with `only` and keep it last in the detectors list.
 
 Live tests that call the real provider are excluded from the default run. Run them with
 `vendor/bin/pest --group=live` with `TYPESAFE_API_KEY` (or `OPENROUTER_API_KEY`) set in the shell or in the package `.env`; without a key they are skipped. `THREAT_BLOCKER_AI_SPAM_DETECTOR_PROVIDER` and `THREAT_BLOCKER_AI_SPAM_DETECTOR_MODEL` select another provider or model.
+The `live-tests` GitHub Actions workflow runs them manually against the models listed in its matrix (OpenRouter only, needs the `OPENROUTER_API_KEY` repository secret).
+
+Models verified with the live tests on OpenRouter: `jev`, `mercury-decide:free`.
 
 ## Usage
 

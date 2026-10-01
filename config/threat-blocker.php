@@ -117,7 +117,7 @@ return [
             // URI pattern => extra instructions, appended to the default instructions.
             'context' => [],
             // Block when the spam + phishing probability reaches this value.
-            'threshold' => 0.8,
+            'threshold' => env('THREAT_BLOCKER_AI_SPAM_DETECTOR_THRESHOLD', 0.8),
             // Maximum number of characters sent to the provider.
             'max_length' => 4000,
             // Seconds to wait for the provider.

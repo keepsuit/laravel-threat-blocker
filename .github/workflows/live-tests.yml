@@ -1,0 +1,36 @@
+name: live-tests
+
+on:
+  workflow_dispatch:
+
+jobs:
+  live:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    strategy:
+      fail-fast: false
+      matrix:
+        model: [jev, 'mercury-decide:free']
+
+    name: openrouter - ${{ matrix.model }}
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v7
+
+      - name: Setup PHP
+        uses: shivammathur/setup-php@v2
+        with:
+          php-version: 8.4
+          extensions: dom, curl, libxml, mbstring, zip, pdo, sqlite, pdo_sqlite, intl, fileinfo
+          coverage: none
+
+      - name: Install dependencies
+        run: composer update --prefer-stable --prefer-dist --no-interaction
+
+      - name: Execute live tests
+        run: vendor/bin/pest --group=live
+        env:
+          THREAT_BLOCKER_AI_SPAM_DETECTOR_PROVIDER: openrouter
+          THREAT_BLOCKER_AI_SPAM_DETECTOR_MODEL: ${{ matrix.model }}
+          OPENROUTER_API_KEY: ${{ secrets.OPENROUTER_API_KEY }}
