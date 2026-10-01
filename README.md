@@ -31,11 +31,6 @@ return [
     'enabled' => env('THREAT_BLOCKER_ENABLED', true),
 
     /**
-     * Log a warning when a threat is detected.
-     */
-    'log' => env('THREAT_BLOCKER_LOG_ENABLED', false),
-
-    /**
      * HTTP methods checked by the detectors (names or HttpMethod cases), '*' means any method.
      * Each detector can override it with its own 'methods' option.
      * Detectors that inspect the request body (FormHoneypotDetector, AiSpamDetector,
@@ -202,8 +197,23 @@ the detector id (`[bot-signature] Known bot User-Agent detected.`).
 The `ThreatDetectedEvent` event carries the `request` and the `exception`. Detectors put in the
 context only derived values (category, score, domain), never request content or full email addresses.
 
-Set `THREAT_BLOCKER_LOG_ENABLED=true` to log every detection as a warning with the request method, path, IP
-and the exception context.
+The package does not log detections, listen to the event to log them the way your application needs
+(level, channel, request data):
+
+```php
+use Illuminate\Support\Facades\Event;
+use Illuminate\Support\Facades\Log;
+use Keepsuit\ThreatBlocker\Events\ThreatDetectedEvent;
+
+Event::listen(function (ThreatDetectedEvent $event) {
+    Log::warning($event->exception->getMessage(), [
+        'method' => $event->request->method(),
+        'path' => $event->request->path(),
+        'ip' => $event->request->ip(),
+        ...$event->exception->context,
+    ]);
+});
+```
 
 ## Usage
 

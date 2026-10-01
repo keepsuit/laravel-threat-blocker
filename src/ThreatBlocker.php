@@ -14,17 +14,11 @@ final class ThreatBlocker
 
     public function __construct(
         public bool $enabled = true,
-        public bool $logging = false,
     ) {}
 
     public function enabled(): bool
     {
         return $this->enabled;
-    }
-
-    public function logging(): bool
-    {
-        return $this->logging;
     }
 
     public function addDetector(Detector $detector): ThreatBlocker

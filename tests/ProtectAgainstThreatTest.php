@@ -114,28 +114,6 @@ it('dispatches the event with the exception of the detector', function () {
     );
 });
 
-it('logs detections when enabled', function () {
-    config()->set('threat-blocker.log', true);
-    Log::spy();
-
-    withServerVariables(['REMOTE_ADDR' => '1.0.170.118'])
-        ->post('/test');
-
-    Log::shouldHaveReceived('warning')->once()->with(
-        '[abuse-ip] AbuseIP database match detected.',
-        ['method' => 'POST', 'path' => 'test', 'ip' => '1.0.170.118'],
-    );
-});
-
-it('does not log detections by default', function () {
-    Log::spy();
-
-    withServerVariables(['REMOTE_ADDR' => '1.0.170.118'])
-        ->post('/test');
-
-    Log::shouldNotHaveReceived('warning');
-});
-
 it('allow request from whitelist', function () {
     config()->set('threat-blocker.detectors.Keepsuit\ThreatBlocker\Detectors\AbuseIpDetector.whitelist', [
         '1.0.170.118',

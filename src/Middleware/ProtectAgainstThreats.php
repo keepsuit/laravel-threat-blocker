@@ -3,7 +3,6 @@
 namespace Keepsuit\ThreatBlocker\Middleware;
 
 use Illuminate\Http\Request;
-use Illuminate\Support\Facades\Log;
 use Keepsuit\ThreatBlocker\Contracts\ThreatResponder;
 use Keepsuit\ThreatBlocker\Events\ThreatDetectedEvent;
 use Keepsuit\ThreatBlocker\Exceptions\ThreatDetectedException;
@@ -26,15 +25,6 @@ class ProtectAgainstThreats
             try {
                 $detector->check($request);
             } catch (ThreatDetectedException $exception) {
-                if ($this->threatBlocker->logging()) {
-                    Log::warning($exception->getMessage(), [
-                        ...$exception->context,
-                        'method' => $request->method(),
-                        'path' => $request->path(),
-                        'ip' => $request->ip(),
-                    ]);
-                }
-
                 event(new ThreatDetectedEvent(request: $request, exception: $exception));
 
                 return $this->responder->respond($request, $next);

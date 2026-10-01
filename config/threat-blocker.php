@@ -16,11 +16,6 @@ return [
     'enabled' => env('THREAT_BLOCKER_ENABLED', true),
 
     /**
-     * Log a warning when a threat is detected.
-     */
-    'log' => env('THREAT_BLOCKER_LOG_ENABLED', false),
-
-    /**
      * HTTP methods checked by the detectors (names or HttpMethod cases), '*' means any method.
      * Each detector can override it with its own 'methods' option.
      * Detectors that inspect the request body (FormHoneypotDetector, AiSpamDetector,
