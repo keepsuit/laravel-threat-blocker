@@ -3,7 +3,6 @@
 namespace Keepsuit\ThreatBlocker;
 
 use Illuminate\Support\Arr;
-use Illuminate\Support\Str;
 use Keepsuit\ThreatBlocker\Contracts\Detector;
 
 final class ThreatBlocker
@@ -48,7 +47,7 @@ final class ThreatBlocker
 
     public function getDetectorById(string $id): ?Detector
     {
-        return Arr::first($this->detectors, fn (Detector $detector) => $this->detectorId($detector) === $id);
+        return Arr::first($this->detectors, fn (Detector $detector) => $detector->id() === $id);
     }
 
     /**
@@ -57,13 +56,5 @@ final class ThreatBlocker
     public function allDetectors(): array
     {
         return $this->detectors;
-    }
-
-    public function detectorId(Detector $detector): string
-    {
-        return Str::of(class_basename($detector))
-            ->rtrim('Detector')
-            ->slug()
-            ->toString();
     }
 }

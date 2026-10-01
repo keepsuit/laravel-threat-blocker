@@ -8,6 +8,7 @@ use Illuminate\Support\Collection;
 use Keepsuit\ThreatBlocker\Contracts\Detector;
 use Keepsuit\ThreatBlocker\Contracts\SourceUpdatable;
 use Keepsuit\ThreatBlocker\Enums\AbuseIpSource;
+use Keepsuit\ThreatBlocker\Enums\HttpMethod;
 use Keepsuit\ThreatBlocker\Exceptions\ThreatDetectedException;
 use Keepsuit\ThreatBlocker\Support\RemoteListCache;
 
@@ -28,6 +29,11 @@ class AbuseIpDetector implements Detector, SourceUpdatable
     protected array $whitelistIps;
 
     /**
+     * @var HttpMethod[]
+     */
+    protected array $methods = HttpMethod::DEFAULT;
+
+    /**
      * @var int[]|null
      */
     protected ?array $abuseIpList = null;
@@ -36,8 +42,14 @@ class AbuseIpDetector implements Detector, SourceUpdatable
         protected RemoteListCache $remoteListCache,
     ) {}
 
+    public function id(): string
+    {
+        return 'abuse-ip';
+    }
+
     public function register(Application $app, array $options): void
     {
+        $this->methods = HttpMethod::fromOptions($options);
         $this->sourceUrl = $options['source'] ?? AbuseIpSource::Days60->url();
         $this->blacklistIps = $options['blacklist'] ?? [];
         $this->whitelistIps = $options['whitelist'] ?? ['127.0.0.1'];
@@ -91,7 +103,7 @@ class AbuseIpDetector implements Detector, SourceUpdatable
     {
         $ip = $request->ip();
 
-        if ($ip === null) {
+        if ($ip === null || ! HttpMethod::matches($this->methods, $request)) {
             return;
         }
 
@@ -100,7 +112,7 @@ class AbuseIpDetector implements Detector, SourceUpdatable
         }
 
         if (in_array($ip, $this->blacklistIps, true)) {
-            throw new ThreatDetectedException('Blacklisted IP detected.');
+            throw new ThreatDetectedException($this->id(), 'Blacklisted IP detected.');
         }
 
         $longIp = ip2long($ip);
@@ -109,7 +121,7 @@ class AbuseIpDetector implements Detector, SourceUpdatable
         }
 
         if (in_array($longIp, $this->getAbuseIpList(), true)) {
-            throw new ThreatDetectedException('AbuseIP database match detected.');
+            throw new ThreatDetectedException($this->id(), 'AbuseIP database match detected.');
         }
     }
 }

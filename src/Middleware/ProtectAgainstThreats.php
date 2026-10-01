@@ -25,11 +25,7 @@ class ProtectAgainstThreats
             try {
                 $detector->check($request);
             } catch (ThreatDetectedException $exception) {
-                event(new ThreatDetectedEvent(
-                    request: $request,
-                    detectorId: $this->threatBlocker->detectorId($detector),
-                    exception: $exception
-                ));
+                event(new ThreatDetectedEvent(request: $request, exception: $exception));
 
                 return $this->responder->respond($request, $next);
             }

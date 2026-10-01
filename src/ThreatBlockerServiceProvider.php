@@ -63,7 +63,10 @@ class ThreatBlockerServiceProvider extends PackageServiceProvider
                     continue;
                 }
 
-                $detector->register($app, is_array($options) ? $options : []);
+                $options = is_array($options) ? $options : [];
+                $options['methods'] ??= config('threat-blocker.methods');
+
+                $detector->register($app, $options);
 
                 $threatBlocker->addDetector($detector);
             }

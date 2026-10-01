@@ -7,13 +7,21 @@ use Keepsuit\ThreatBlocker\Detectors\EmailReputationDetector;
 use Keepsuit\ThreatBlocker\Detectors\FormHoneypotDetector;
 use Keepsuit\ThreatBlocker\Enums\AbuseIpSource;
 use Keepsuit\ThreatBlocker\Enums\EmailReputationSource;
-use Keepsuit\ThreatBlocker\Reponders\BlankPageResponder;
+use Keepsuit\ThreatBlocker\Responders\BlankPageResponder;
 
 return [
     /**
      * This option enables or disables the Threat Blocker protection.
      */
     'enabled' => env('THREAT_BLOCKER_ENABLED', true),
+
+    /**
+     * HTTP methods checked by the detectors (names or HttpMethod cases), '*' means any method.
+     * Each detector can override it with its own 'methods' option.
+     * Detectors that inspect the request body (FormHoneypotDetector, AiSpamDetector,
+     * EmailReputationDetector) only support POST, PUT and PATCH, other methods are ignored.
+     */
+    'methods' => ['POST'],
 
     /**
      * Storage driver to use for caching detectors data.

@@ -21,7 +21,7 @@ class UpdateAbuseIpCommand extends Command
                 continue;
             }
 
-            $this->outputComponents()->task($threatBlocker->detectorId($detector), fn () => $detector->updateSource());
+            $this->outputComponents()->task($detector->id(), fn () => $detector->updateSource());
         }
 
         return self::SUCCESS;

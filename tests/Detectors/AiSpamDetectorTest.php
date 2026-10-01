@@ -38,7 +38,23 @@ test('blocks when spam and phishing reach the threshold', function () {
     fakeAiCategory(['legitimate' => 0.1, 'spam' => 0.9, 'phishing' => 0.0]);
 
     expect(fn () => aiSpamDetector()->check(aiSpamPost()))
-        ->toThrow(ThreatDetectedException::class, 'AiSpamDetector flagged request as spam (spam+phishing 0.9).');
+        ->toThrow(ThreatDetectedException::class, '[ai-spam] Request flagged as spam.');
+});
+
+test('exposes the scores in the exception context', function () {
+    useAiSpamOptions();
+    fakeAiCategory(['legitimate' => 0.1, 'spam' => 0.9, 'phishing' => 0.0]);
+
+    try {
+        aiSpamDetector()->check(aiSpamPost());
+    } catch (ThreatDetectedException $e) {
+        expect($e->detectorId)->toBe('ai-spam')
+            ->and($e->context)->toBe(['category' => 'spam', 'score' => 0.9, 'spam' => 0.9, 'phishing' => 0.0]);
+
+        return;
+    }
+
+    $this->fail('Expected ThreatDetectedException');
 });
 
 test('blocks when spam and phishing are split', function () {
@@ -46,7 +62,7 @@ test('blocks when spam and phishing are split', function () {
     fakeAiCategory(['legitimate' => 0.1, 'spam' => 0.45, 'phishing' => 0.45]);
 
     expect(fn () => aiSpamDetector()->check(aiSpamPost()))
-        ->toThrow(ThreatDetectedException::class, 'spam+phishing 0.9');
+        ->toThrow(ThreatDetectedException::class, '[ai-spam] Request flagged as spam.');
 });
 
 test('labels the request with the most likely threat', function () {
@@ -54,7 +70,7 @@ test('labels the request with the most likely threat', function () {
     fakeAiCategory(['legitimate' => 0.1, 'spam' => 0.2, 'phishing' => 0.7]);
 
     expect(fn () => aiSpamDetector()->check(aiSpamPost()))
-        ->toThrow(ThreatDetectedException::class, 'flagged request as phishing');
+        ->toThrow(ThreatDetectedException::class, '[ai-spam] Request flagged as phishing.');
 });
 
 test('allows below the threshold', function () {

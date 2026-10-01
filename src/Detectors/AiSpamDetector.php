@@ -8,6 +8,7 @@ use Illuminate\Support\Arr;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Str;
 use Keepsuit\ThreatBlocker\Contracts\Detector;
+use Keepsuit\ThreatBlocker\Enums\HttpMethod;
 use Keepsuit\ThreatBlocker\Exceptions\ThreatDetectedException;
 use Keepsuit\ThreatBlocker\Support\InputFields;
 use Laravel\Ai\Classification;
@@ -25,6 +26,11 @@ class AiSpamDetector implements Detector
      * @var string[]
      */
     public const array EXCLUDED_FIELDS = ['_token', '_method', 'password', 'password_confirmation', 'current_password'];
+
+    /**
+     * @var HttpMethod[]
+     */
+    protected array $methods = HttpMethod::DEFAULT;
 
     /**
      * @var string[]
@@ -51,8 +57,15 @@ class AiSpamDetector implements Detector
 
     protected int $timeout = 5;
 
+    public function id(): string
+    {
+        return 'ai-spam';
+    }
+
     public function register(Application $app, array $options): void
     {
+        $this->methods = HttpMethod::fromOptions($options, bodyOnly: true);
+
         $fields = $options['fields'] ?? ['*'];
         $this->fields = is_array($fields)
             ? array_values(array_filter($fields, is_string(...)))
@@ -77,7 +90,7 @@ class AiSpamDetector implements Detector
 
     public function check(Request $request): void
     {
-        if (! $request->isMethod('POST') || $this->fields === []) {
+        if (! HttpMethod::matches($this->methods, $request) || $this->fields === []) {
             return;
         }
 
@@ -131,7 +144,9 @@ class AiSpamDetector implements Detector
             $label = $phishing > $spam ? 'phishing' : 'spam';
 
             throw new ThreatDetectedException(
-                sprintf('AiSpamDetector flagged request as %s (spam+phishing %s).', $label, round($score, 2)),
+                $this->id(),
+                sprintf('Request flagged as %s.', $label),
+                ['category' => $label, 'score' => round($score, 2), 'spam' => round($spam, 2), 'phishing' => round($phishing, 2)],
             );
         }
     }
