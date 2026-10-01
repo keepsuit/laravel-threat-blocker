@@ -5,13 +5,13 @@ namespace Keepsuit\ThreatBlocker\Detectors;
 use Illuminate\Foundation\Application;
 use Illuminate\Http\Request;
 use Illuminate\Support\Arr;
-use Illuminate\Support\Str;
 use Keepsuit\ThreatBlocker\Contracts\Detector;
 use Keepsuit\ThreatBlocker\Contracts\DnsResolver;
 use Keepsuit\ThreatBlocker\Contracts\SourceUpdatable;
 use Keepsuit\ThreatBlocker\Contracts\StorageDriver;
 use Keepsuit\ThreatBlocker\Enums\EmailReputationSource;
 use Keepsuit\ThreatBlocker\Exceptions\ThreatDetectedException;
+use Keepsuit\ThreatBlocker\Support\InputFields;
 use Keepsuit\ThreatBlocker\Support\RemoteListCache;
 
 class EmailReputationDetector implements Detector, SourceUpdatable
@@ -113,7 +113,7 @@ class EmailReputationDetector implements Detector, SourceUpdatable
         $candidates = [];
 
         foreach (Arr::dot($request->all()) as $key => $value) {
-            if (! is_string($value) || ! $this->matchesField($key)) {
+            if (! is_string($value) || ! InputFields::matches($this->fields, $key)) {
                 continue;
             }
 
@@ -123,21 +123,6 @@ class EmailReputationDetector implements Detector, SourceUpdatable
         }
 
         return array_values(array_unique($candidates));
-    }
-
-    protected function matchesField(string $key): bool
-    {
-        foreach ($this->fields as $field) {
-            $subject = str_contains($field, '.')
-                ? $key
-                : Str::afterLast($key, '.');
-
-            if (Str::is($field, $subject)) {
-                return true;
-            }
-        }
-
-        return false;
     }
 
     protected function emailDomain(string $email): ?string

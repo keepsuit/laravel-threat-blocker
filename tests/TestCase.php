@@ -5,6 +5,7 @@ namespace Keepsuit\ThreatBlocker\Tests;
 use Illuminate\Database\Eloquent\Factories\Factory;
 use Illuminate\Support\Facades\Http;
 use Keepsuit\ThreatBlocker\ThreatBlockerServiceProvider;
+use Laravel\Ai\AiServiceProvider;
 use Orchestra\Testbench\TestCase as Orchestra;
 use Spatie\Honeypot\HoneypotServiceProvider;
 
@@ -26,6 +27,7 @@ class TestCase extends Orchestra
     protected function getPackageProviders($app): array
     {
         return [
+            AiServiceProvider::class,
             HoneypotServiceProvider::class,
             ThreatBlockerServiceProvider::class,
         ];
@@ -35,11 +37,5 @@ class TestCase extends Orchestra
     {
         config()->set('database.default', 'testing');
         config()->set('threat-blocker.storage.cache.store', 'array');
-
-        /*
-         foreach (\Illuminate\Support\Facades\File::allFiles(__DIR__ . '/../database/migrations') as $migration) {
-            (include $migration->getRealPath())->up();
-         }
-         */
     }
 }

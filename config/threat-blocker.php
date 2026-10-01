@@ -1,6 +1,7 @@
 <?php
 
 use Keepsuit\ThreatBlocker\Detectors\AbuseIpDetector;
+use Keepsuit\ThreatBlocker\Detectors\AiSpamDetector;
 use Keepsuit\ThreatBlocker\Detectors\BotSignatureDetector;
 use Keepsuit\ThreatBlocker\Detectors\EmailReputationDetector;
 use Keepsuit\ThreatBlocker\Detectors\FormHoneypotDetector;
@@ -98,6 +99,29 @@ return [
              * Examples: true, ['/contact', '/newsletter/*']
              */
             'strict' => false,
+        ],
+        /**
+         * Block POST requests classified as spam or phishing by an AI model.
+         * This detector requires the laravel/ai package and a provider that supports classification
+         * (typesafe or openrouter). Form data is sent to the provider, password fields and _token are excluded.
+         */
+        AiSpamDetector::class => [
+            'enabled' => env('THREAT_BLOCKER_AI_SPAM_DETECTOR_ENABLED', false),
+            // Null falls back to laravel/ai classification defaults.
+            'provider' => env('THREAT_BLOCKER_AI_SPAM_DETECTOR_PROVIDER'),
+            'model' => env('THREAT_BLOCKER_AI_SPAM_DETECTOR_MODEL'),
+            // ['*'] sends all input. Empty fields disable this detector. Matching follows EmailReputationDetector.
+            'fields' => ['*'],
+            // URI patterns to evaluate, empty means all URIs. Example: ['/contact', '/newsletter/*']
+            'only' => [],
+            // URI pattern => extra instructions, appended to the default instructions.
+            'context' => [],
+            // Block when the spam + phishing probability reaches this value.
+            'threshold' => env('THREAT_BLOCKER_AI_SPAM_DETECTOR_THRESHOLD', 0.8),
+            // Maximum number of characters sent to the provider.
+            'max_length' => 4000,
+            // Seconds to wait for the provider.
+            'timeout' => 5,
         ],
     ],
 ];

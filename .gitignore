@@ -29,3 +29,4 @@ phpunit.xml
 testbench.yaml
 /docs
 /coverage
+.env
