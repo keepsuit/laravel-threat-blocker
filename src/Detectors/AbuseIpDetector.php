@@ -11,7 +11,6 @@ use Keepsuit\ThreatBlocker\Enums\AbuseIpSource;
 use Keepsuit\ThreatBlocker\Exceptions\ThreatDetectedException;
 use Keepsuit\ThreatBlocker\Support\RemoteListCache;
 use Keepsuit\ThreatBlocker\Support\RequestMethods;
-use Keepsuit\ThreatBlocker\ThreatBlocker;
 
 class AbuseIpDetector implements Detector, SourceUpdatable
 {
@@ -42,6 +41,11 @@ class AbuseIpDetector implements Detector, SourceUpdatable
     public function __construct(
         protected RemoteListCache $remoteListCache,
     ) {}
+
+    public function id(): string
+    {
+        return 'abuse-ip';
+    }
 
     public function register(Application $app, array $options): void
     {
@@ -108,7 +112,7 @@ class AbuseIpDetector implements Detector, SourceUpdatable
         }
 
         if (in_array($ip, $this->blacklistIps, true)) {
-            throw new ThreatDetectedException(ThreatBlocker::idFor(static::class), 'Blacklisted IP detected.');
+            throw new ThreatDetectedException($this->id(), 'Blacklisted IP detected.');
         }
 
         $longIp = ip2long($ip);
@@ -117,7 +121,7 @@ class AbuseIpDetector implements Detector, SourceUpdatable
         }
 
         if (in_array($longIp, $this->getAbuseIpList(), true)) {
-            throw new ThreatDetectedException(ThreatBlocker::idFor(static::class), 'AbuseIP database match detected.');
+            throw new ThreatDetectedException($this->id(), 'AbuseIP database match detected.');
         }
     }
 }

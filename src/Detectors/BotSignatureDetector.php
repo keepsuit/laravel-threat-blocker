@@ -8,7 +8,6 @@ use Illuminate\Support\Facades\Log;
 use Keepsuit\ThreatBlocker\Contracts\Detector;
 use Keepsuit\ThreatBlocker\Exceptions\ThreatDetectedException;
 use Keepsuit\ThreatBlocker\Support\RequestMethods;
-use Keepsuit\ThreatBlocker\ThreatBlocker;
 
 class BotSignatureDetector implements Detector
 {
@@ -43,6 +42,11 @@ class BotSignatureDetector implements Detector
      * @var string[]
      */
     protected array $userAgentPatterns = self::DEFAULT_USER_AGENT_PATTERNS;
+
+    public function id(): string
+    {
+        return 'bot-signature';
+    }
 
     public function register(Application $app, array $options): void
     {
@@ -88,14 +92,14 @@ class BotSignatureDetector implements Detector
 
         if ($this->missingUserAgent) {
             if ($userAgent === '') {
-                throw new ThreatDetectedException(ThreatBlocker::idFor(static::class), 'Missing User-Agent detected.');
+                throw new ThreatDetectedException($this->id(), 'Missing User-Agent detected.');
             }
         }
 
         if ($this->knownBotUserAgents) {
             foreach ($this->userAgentPatterns as $pattern) {
                 if (preg_match($pattern, $userAgent) === 1) {
-                    throw new ThreatDetectedException(ThreatBlocker::idFor(static::class), 'Known bot User-Agent detected.');
+                    throw new ThreatDetectedException($this->id(), 'Known bot User-Agent detected.');
                 }
             }
         }
@@ -103,7 +107,7 @@ class BotSignatureDetector implements Detector
         if ($this->missingAcceptLanguage) {
             $acceptLanguageHeader = trim((string) $request->headers->get('Accept-Language', ''));
             if ($acceptLanguageHeader === '') {
-                throw new ThreatDetectedException(ThreatBlocker::idFor(static::class), 'Missing Accept-Language detected.');
+                throw new ThreatDetectedException($this->id(), 'Missing Accept-Language detected.');
             }
         }
 
@@ -112,7 +116,7 @@ class BotSignatureDetector implements Detector
             $refererHost = $refererHeader === '' ? null : parse_url($refererHeader, PHP_URL_HOST);
 
             if (! is_string($refererHost) || strcasecmp($refererHost, $request->getHost()) !== 0) {
-                throw new ThreatDetectedException(ThreatBlocker::idFor(static::class), 'Invalid Referer detected.');
+                throw new ThreatDetectedException($this->id(), 'Invalid Referer detected.');
             }
         }
     }

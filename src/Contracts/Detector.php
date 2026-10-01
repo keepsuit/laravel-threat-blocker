@@ -8,6 +8,8 @@ use Keepsuit\ThreatBlocker\Exceptions\ThreatDetectedException;
 
 interface Detector
 {
+    public function id(): string;
+
     public function register(Application $app, array $options): void;
 
     /**

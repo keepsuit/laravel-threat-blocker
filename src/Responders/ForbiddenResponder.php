@@ -1,6 +1,6 @@
 <?php
 
-namespace Keepsuit\ThreatBlocker\Reponders;
+namespace Keepsuit\ThreatBlocker\Responders;
 
 use Illuminate\Http\Request;
 use Keepsuit\ThreatBlocker\Contracts\ThreatResponder;

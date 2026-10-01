@@ -7,7 +7,7 @@ use Keepsuit\ThreatBlocker\Detectors\EmailReputationDetector;
 use Keepsuit\ThreatBlocker\Detectors\FormHoneypotDetector;
 use Keepsuit\ThreatBlocker\Enums\AbuseIpSource;
 use Keepsuit\ThreatBlocker\Enums\EmailReputationSource;
-use Keepsuit\ThreatBlocker\Reponders\BlankPageResponder;
+use Keepsuit\ThreatBlocker\Responders\BlankPageResponder;
 
 return [
     /**

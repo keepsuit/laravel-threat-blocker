@@ -11,7 +11,6 @@ use Keepsuit\ThreatBlocker\Contracts\Detector;
 use Keepsuit\ThreatBlocker\Exceptions\ThreatDetectedException;
 use Keepsuit\ThreatBlocker\Support\InputFields;
 use Keepsuit\ThreatBlocker\Support\RequestMethods;
-use Keepsuit\ThreatBlocker\ThreatBlocker;
 use Laravel\Ai\Classification;
 use Laravel\Ai\Classification\Choice;
 use Laravel\Ai\Responses\Data\ChoiceAnswer;
@@ -57,6 +56,11 @@ class AiSpamDetector implements Detector
     protected ?string $model = null;
 
     protected int $timeout = 5;
+
+    public function id(): string
+    {
+        return 'ai-spam';
+    }
 
     public function register(Application $app, array $options): void
     {
@@ -140,7 +144,7 @@ class AiSpamDetector implements Detector
             $label = $phishing > $spam ? 'phishing' : 'spam';
 
             throw new ThreatDetectedException(
-                ThreatBlocker::idFor(static::class),
+                $this->id(),
                 sprintf('Request flagged as %s.', $label),
                 ['category' => $label, 'score' => round($score, 2), 'spam' => round($spam, 2), 'phishing' => round($phishing, 2)],
             );

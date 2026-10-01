@@ -14,7 +14,6 @@ use Keepsuit\ThreatBlocker\Exceptions\ThreatDetectedException;
 use Keepsuit\ThreatBlocker\Support\InputFields;
 use Keepsuit\ThreatBlocker\Support\RemoteListCache;
 use Keepsuit\ThreatBlocker\Support\RequestMethods;
-use Keepsuit\ThreatBlocker\ThreatBlocker;
 
 class EmailReputationDetector implements Detector, SourceUpdatable
 {
@@ -56,6 +55,11 @@ class EmailReputationDetector implements Detector, SourceUpdatable
         protected StorageDriver $storage,
         protected DnsResolver $dnsResolver,
     ) {}
+
+    public function id(): string
+    {
+        return 'email-reputation';
+    }
 
     public function register(Application $app, array $options): void
     {
@@ -116,7 +120,7 @@ class EmailReputationDetector implements Detector, SourceUpdatable
     protected function threat(string $message, string $domain, string $reason): ThreatDetectedException
     {
         return new ThreatDetectedException(
-            ThreatBlocker::idFor(static::class),
+            $this->id(),
             $message,
             ['domain' => $domain, 'reason' => $reason],
         );

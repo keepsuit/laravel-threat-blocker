@@ -57,9 +57,18 @@ test('detector methods override the global ones', function () {
         ->and(invade($blocker->getDetector(AiSpamDetector::class))->methods)->toBe(['PUT']);
 });
 
-test('detector ids are kebab cased', function () {
-    expect(ThreatBlocker::idFor(AbuseIpDetector::class))->toBe('abuse-ip')
-        ->and(ThreatBlocker::idFor(BotSignatureDetector::class))->toBe('bot-signature')
-        ->and(ThreatBlocker::idFor(EmailReputationDetector::class))->toBe('email-reputation')
-        ->and(ThreatBlocker::idFor(AiSpamDetector::class))->toBe('ai-spam');
+test('detectors expose a stable id', function () {
+    config()->set('threat-blocker.detectors', [
+        AbuseIpDetector::class => [],
+        BotSignatureDetector::class => [],
+        EmailReputationDetector::class => [],
+        AiSpamDetector::class => [],
+    ]);
+
+    $blocker = app(ThreatBlocker::class);
+
+    expect($blocker->getDetectorById('abuse-ip'))->toBeInstanceOf(AbuseIpDetector::class)
+        ->and($blocker->getDetectorById('bot-signature'))->toBeInstanceOf(BotSignatureDetector::class)
+        ->and($blocker->getDetectorById('email-reputation'))->toBeInstanceOf(EmailReputationDetector::class)
+        ->and($blocker->getDetectorById('ai-spam'))->toBeInstanceOf(AiSpamDetector::class);
 });
