@@ -3,6 +3,7 @@
 namespace Keepsuit\ThreatBlocker\Support;
 
 use Illuminate\Http\Request;
+use Illuminate\Support\Arr;
 
 class RequestMethods
 {
@@ -26,10 +27,8 @@ class RequestMethods
      */
     public static function resolve(array $options, bool $bodyOnly = false): array
     {
-        $methods = $options['methods'] ?? self::DEFAULT;
-        $methods = is_array($methods)
-            ? array_values(array_unique(array_map(strtoupper(...), array_filter($methods, is_string(...)))))
-            : [];
+        $methods = Arr::wrap($options['methods'] ?? self::DEFAULT);
+        $methods = array_values(array_unique(array_map(strtoupper(...), array_filter($methods, is_string(...)))));
 
         if (! $bodyOnly) {
             return $methods;

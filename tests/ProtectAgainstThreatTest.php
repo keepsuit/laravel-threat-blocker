@@ -83,6 +83,24 @@ it('checks abused ips on methods configured for the detector', function () {
         ->assertDontSee('ok');
 });
 
+it('does not run body detectors on methods without a body', function () {
+    config()->set('threat-blocker.detectors.'.FormHoneypotDetector::class.'.methods', ['GET']);
+    config()->set('honeypot.randomize_name_field_name', false);
+
+    post('/test', [config('honeypot.name_field_name') => 'My name'])
+        ->assertOk()
+        ->assertSee('ok');
+});
+
+it('runs body detectors on configured body methods', function () {
+    config()->set('threat-blocker.detectors.'.FormHoneypotDetector::class.'.methods', ['PUT']);
+    config()->set('honeypot.randomize_name_field_name', false);
+
+    $this->put('/test', [config('honeypot.name_field_name') => 'My name'])
+        ->assertOk()
+        ->assertDontSee('ok');
+});
+
 it('dispatches the event with the exception of the detector', function () {
     Event::fake([ThreatDetectedEvent::class]);
 

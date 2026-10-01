@@ -28,10 +28,10 @@ class ProtectAgainstThreats
             } catch (ThreatDetectedException $exception) {
                 if ($this->threatBlocker->logging()) {
                     Log::warning($exception->getMessage(), [
+                        ...$exception->context,
                         'method' => $request->method(),
                         'path' => $request->path(),
                         'ip' => $request->ip(),
-                        ...$exception->context,
                     ]);
                 }
 

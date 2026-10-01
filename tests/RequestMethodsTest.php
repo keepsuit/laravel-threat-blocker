@@ -14,7 +14,7 @@ test('resolves methods', function (array $options, bool $bodyOnly, array $expect
     'default' => [[], false, ['POST']],
     'normalizes case, duplicates and non strings' => [['methods' => ['post', 'POST', 1, 'get']], false, ['POST', 'GET']],
     'wildcard' => [['methods' => ['*']], false, ['*']],
-    'not an array' => [['methods' => 'POST'], false, []],
+    'single method' => [['methods' => 'put'], false, ['PUT']],
     'body detectors ignore unsupported methods' => [['methods' => ['GET', 'delete', 'patch']], true, ['PATCH']],
     'body detectors expand the wildcard' => [['methods' => ['*']], true, ['POST', 'PUT', 'PATCH']],
     'body detectors may end up with no methods' => [['methods' => ['GET']], true, []],
