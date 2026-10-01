@@ -10,7 +10,7 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        model: [jev, 'mercury-decide:free']
+        model: ['~typesafe/jev-latest', 'inception/mercury-decide:free']
 
     name: openrouter - ${{ matrix.model }}
 
