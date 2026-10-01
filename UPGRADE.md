@@ -15,7 +15,7 @@ Compare your published `config/threat-blocker.php` with the package one:
 - **`AbuseIpDetector` no longer checks `GET` requests** (and any method other than `POST`). To keep the previous behavior set `'methods' => ['*']` on it.
 - The `detectors` array is not merged with the package defaults, so new detectors must be added to your published config:
   - `EmailReputationDetector` and `BotSignatureDetector` are enabled by default (the latter blocks missing and known bot User-Agents).
-  - `AiSpamDetector` is disabled by default and requires `laravel/ai`.
+  - `AiSpamDetector` is disabled by default and requires `laravel/ai` and a configured classification provider.
 
 ### Events and exceptions
 
