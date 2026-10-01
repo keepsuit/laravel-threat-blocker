@@ -12,20 +12,28 @@ use Laravel\Ai\Responses\Data\ChoiceAnswer;
 
 pest()->group('live');
 
+// Testbench only loads the skeleton's .env, not the package root one.
+Dotenv\Dotenv::createImmutable(dirname(__DIR__, 2))->safeLoad();
+
 beforeEach(function () {
-    $provider = match (true) {
-        (string) getenv('TYPESAFE_API_KEY') !== '' => 'typesafe',
-        (string) getenv('OPENROUTER_API_KEY') !== '' => 'openrouter',
+    $provider = env('THREAT_BLOCKER_AI_SPAM_DETECTOR_PROVIDER') ?: match (true) {
+        filled(env('TYPESAFE_API_KEY')) => 'typesafe',
+        filled(env('OPENROUTER_API_KEY')) => 'openrouter',
         default => null,
     };
+    $key = $provider === null ? null : env(strtoupper($provider).'_API_KEY');
 
-    if ($provider === null) {
+    if (blank($key)) {
         $this->markTestSkipped('Set TYPESAFE_API_KEY or OPENROUTER_API_KEY to run the live AI spam tests.');
     }
 
-    config()->set("ai.providers.{$provider}.key", getenv(strtoupper($provider).'_API_KEY'));
+    config()->set("ai.providers.{$provider}.key", $key);
     config()->set('threat-blocker.detectors', [
-        AiSpamDetector::class => ['provider' => $provider, 'timeout' => 20],
+        AiSpamDetector::class => [
+            'provider' => $provider,
+            'model' => env('THREAT_BLOCKER_AI_SPAM_DETECTOR_MODEL'),
+            'timeout' => 20,
+        ],
     ]);
 
     Http::allowStrayRequests();

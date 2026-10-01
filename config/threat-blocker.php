@@ -107,6 +107,7 @@ return [
          */
         AiSpamDetector::class => [
             'enabled' => env('THREAT_BLOCKER_AI_SPAM_DETECTOR_ENABLED', false),
+            // Null falls back to laravel/ai classification defaults.
             'provider' => env('THREAT_BLOCKER_AI_SPAM_DETECTOR_PROVIDER'),
             'model' => env('THREAT_BLOCKER_AI_SPAM_DETECTOR_MODEL'),
             // ['*'] sends all input. Empty fields disable this detector. Matching follows EmailReputationDetector.

@@ -157,7 +157,7 @@ so restrict it with `only` and keep it last in the detectors list.
 ```
 
 Live tests that call the real provider are excluded from the default run. Run them with
-`TYPESAFE_API_KEY=... vendor/bin/pest --group=live` (or `OPENROUTER_API_KEY`); without a key they are skipped.
+`vendor/bin/pest --group=live` with `TYPESAFE_API_KEY` (or `OPENROUTER_API_KEY`) set in the shell or in the package `.env`; without a key they are skipped. `THREAT_BLOCKER_AI_SPAM_DETECTOR_PROVIDER` and `THREAT_BLOCKER_AI_SPAM_DETECTOR_MODEL` select another provider or model.
 
 ## Usage
 

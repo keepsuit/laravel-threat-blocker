@@ -37,11 +37,5 @@ class TestCase extends Orchestra
     {
         config()->set('database.default', 'testing');
         config()->set('threat-blocker.storage.cache.store', 'array');
-
-        /*
-         foreach (\Illuminate\Support\Facades\File::allFiles(__DIR__ . '/../database/migrations') as $migration) {
-            (include $migration->getRealPath())->up();
-         }
-         */
     }
 }

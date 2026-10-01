@@ -206,3 +206,26 @@ test('allows and logs a warning without the payload when classification fails', 
         ->withArgs(fn (string $message, array $context) => $message === 'AiSpamDetector: classification failed, request allowed.'
             && $context === ['exception' => RuntimeException::class, 'message' => 'Provider down']);
 });
+
+test('falls back to laravel/ai classification defaults', function () {
+    config()->set('ai.default_for_classification', 'openrouter');
+    config()->set('ai.providers.openrouter.models.classification.default', 'vendor/default-model');
+    useAiSpamOptions();
+    fakeAiCategory(['legitimate' => 1.0, 'spam' => 0.0, 'phishing' => 0.0]);
+
+    aiSpamDetector()->check(aiSpamPost());
+
+    Classification::assertClassified(fn (ClassificationPrompt $prompt) => $prompt->provider->name() === 'openrouter'
+        && $prompt->model === 'vendor/default-model');
+});
+
+test('uses the configured provider and model', function () {
+    config()->set('ai.default_for_classification', 'openrouter');
+    useAiSpamOptions(['provider' => 'typesafe', 'model' => 'custom-model']);
+    fakeAiCategory(['legitimate' => 1.0, 'spam' => 0.0, 'phishing' => 0.0]);
+
+    aiSpamDetector()->check(aiSpamPost());
+
+    Classification::assertClassified(fn (ClassificationPrompt $prompt) => $prompt->provider->name() === 'typesafe'
+        && $prompt->model === 'custom-model');
+});
