@@ -45,6 +45,22 @@ test('update abuseip detector source', function () {
         ->{'ips'}->toHaveCount(52204);
 });
 
+test('cached source expires after one year without updates', function () {
+    TestTime::freezeAtSecond();
+
+    Http::fake([
+        'https://raw.githubusercontent.com/borestad/blocklist-abuseipdb/main/*' => Http::response("1.0.170.118\n"),
+    ]);
+
+    app(ThreatBlocker::class)->getDetector(AbuseIpDetector::class)->updateSource();
+
+    TestTime::addDays(364);
+    expect(app(StorageDriver::class)->get('abuseip-list'))->not->toBeNull();
+
+    TestTime::addDays(2);
+    expect(app(StorageDriver::class)->get('abuseip-list'))->toBeNull();
+});
+
 test('load cached data with old format', function () {
     app(StorageDriver::class)->set('abuseip-list', [350046382, 350046449, 350103321]);
 

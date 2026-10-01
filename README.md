@@ -162,8 +162,8 @@ return [
 
 Detectors keep their data (the downloaded lists and the MX lookup results) in a storage driver. The only driver
 is `cache`, which uses a Laravel cache store: set `THREAT_BLOCKER_CACHE_STORE` (it falls back to `CACHE_STORE`)
-and, if needed, `THREAT_BLOCKER_CACHE_PREFIX`. The lists are stored without expiration, so use a persistent
-store shared by all your servers (e.g. `redis` or `database`) and not `array`.
+and, if needed, `THREAT_BLOCKER_CACHE_PREFIX`. The lists expire after one year without updates (every update renews them).
+Use a persistent store shared by all your servers (e.g. `redis` or `database`) and not `array`.
 
 ### Responder
 

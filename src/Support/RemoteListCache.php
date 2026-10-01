@@ -11,6 +11,8 @@ use Keepsuit\ThreatBlocker\Contracts\StorageDriver;
 
 class RemoteListCache
 {
+    public const int TTL = 31536000;
+
     public function __construct(
         protected StorageDriver $storage,
     ) {}
@@ -30,7 +32,7 @@ class RemoteListCache
         $this->storage->set($cacheKey, [
             $itemsKey => $items,
             'updated_at' => $lastUpdatedAt->timestamp,
-        ]);
+        ], self::TTL);
     }
 
     /**
