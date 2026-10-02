@@ -83,6 +83,14 @@ function aiLiveCheck(string $category, string $name, array $payload): void
 test('allows legitimate submissions', function (string $name, array $payload) {
     aiLiveCheck('legitimate', $name, $payload);
 })->with([
+    'support-with-technical-log' => [
+        'support-with-technical-log',
+        [
+            'name' => 'Marco Rossi',
+            'email' => 'marco.rossi@example.com',
+            'message' => 'Hello, the report export fails with HTTP 500. The log says: SQLSTATE[HY000] [2002] Connection refused. Request ID: VfIcfSgHjygOUgJX. Can you help me resolve this?',
+        ],
+    ],
     'quote-with-website' => [
         'quote-with-website',
         [
@@ -130,6 +138,17 @@ test('allows legitimate submissions', function (string $name, array $payload) {
 test('blocks spam submissions', function (string $name, array $payload) {
     aiLiveCheck('spam', $name, $payload);
 })->with([
+    'random-text' => [
+        'random-text',
+        [
+            'first_name' => 'FFIuixLECZcoMEOhVQzmuHR',
+            'last_name' => 'qyLGSWATQXHVMrLj',
+            'email' => 'contact@example.com',
+            'phone' => '2025550147',
+            'message' => 'VfIcfSgHjygOUgJX',
+            'privacy' => 'on',
+        ],
+    ],
     'seo-backlinks' => [
         'seo-backlinks',
         [

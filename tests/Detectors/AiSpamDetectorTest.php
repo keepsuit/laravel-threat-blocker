@@ -146,22 +146,41 @@ test('sends only the configured fields', function () {
     );
 });
 
-test('excludes sensitive keys from the state', function () {
+test('excludes sensitive and honeypot keys from the state', function (string $honeypotField) {
+    config()->set('honeypot.valid_from_field_name', $honeypotField);
     useAiSpamOptions();
     fakeAiCategory(['legitimate' => 1.0, 'spam' => 0.0, 'phishing' => 0.0]);
 
     aiSpamDetector()->check(aiSpamPost([
         '_token' => 'csrf',
         '_method' => 'POST',
+        $honeypotField => 'encrypted-honeypot-timestamp',
         'password' => 'secret',
         'password_confirmation' => 'secret',
         'current_password' => 'secret',
         'user' => ['password' => 'secret'],
+        'nested' => [$honeypotField => 'encrypted-honeypot-timestamp'],
         'message' => 'Hello',
     ]));
 
     Classification::assertClassified(
         fn (ClassificationPrompt $prompt) => $prompt->state === ['message' => 'Hello']
+    );
+})->with(['valid_from', 'form_timestamp']);
+
+test('does not exclude valid_from when the honeypot field has another name', function () {
+    config()->set('honeypot.valid_from_field_name', 'form_timestamp');
+    useAiSpamOptions();
+    fakeAiCategory(['legitimate' => 1.0, 'spam' => 0.0, 'phishing' => 0.0]);
+
+    aiSpamDetector()->check(aiSpamPost([
+        'form_timestamp' => 'encrypted-honeypot-timestamp',
+        'valid_from' => 'Monday',
+        'message' => 'Hello',
+    ]));
+
+    Classification::assertClassified(
+        fn (ClassificationPrompt $prompt) => $prompt->state === ['valid_from' => 'Monday', 'message' => 'Hello']
     );
 });
 

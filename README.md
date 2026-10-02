@@ -268,8 +268,9 @@ your forms; without it the check is skipped and a warning is logged.
 `composer require laravel/ai` plus the API key of a provider that supports classification (only `typesafe` and `openrouter` do). Every evaluated request adds latency and provider cost,
 so restrict it with `only` and keep it last in the detectors list.
 
-- Form data is sent to the external provider. Files, `_token`, `_method` and password fields
-  are never sent, and the payload is truncated to `max_length` characters.
+- Form data is sent to the external provider. Files, `_token`, `_method`, password fields and the
+  honeypot timestamp field configured via `honeypot.valid_from_field_name` are never sent,
+  and the payload is truncated to `max_length` characters.
 - A request is blocked when the spam + phishing probability reaches `threshold`. Providers that
   return no probabilities never block.
 - On any provider error or timeout the request is allowed and a warning is logged (fail-open).
