@@ -2,6 +2,15 @@
 
 All notable changes to `laravel-threat-blocker` will be documented in this file.
 
+## 0.2.1 - 2026-10-02
+
+### What's Changed
+
+* docs: name the target version in the upgrade guide by @cappuc in https://github.com/keepsuit/laravel-threat-blocker/pull/18
+* Improve AI spam classification and exclude configured honeypot timestamp by @cappuc in https://github.com/keepsuit/laravel-threat-blocker/pull/19
+
+**Full Changelog**: https://github.com/keepsuit/laravel-threat-blocker/compare/0.2.0...0.2.1
+
 ## 0.2.0 - 2026-10-01
 
 ### What's Changed
