@@ -7,7 +7,6 @@
 
 Laravel Threat Blocker is a package to block threat requests to your Laravel application based on different rules.
 
-
 ## Installation
 
 You can install the package via composer:
@@ -266,8 +265,7 @@ your forms; without it the check is skipped and a warning is logged.
 
 `AiSpamDetector` classifies form data as legitimate, spam or phishing with
 [`laravel/ai`](https://github.com/laravel/ai). It is disabled by default and needs
-`composer require laravel/ai` plus the API key of a provider that supports classification
-(only `typesafe` and `openrouter` do). Every evaluated request adds latency and provider cost,
+`composer require laravel/ai` plus the API key of a provider that supports classification (only `typesafe` and `openrouter` do). Every evaluated request adds latency and provider cost,
 so restrict it with `only` and keep it last in the detectors list.
 
 - Form data is sent to the external provider. Files, `_token`, `_method` and password fields
@@ -284,10 +282,20 @@ so restrict it with `only` and keep it last in the detectors list.
 ],
 ```
 
-Models verified with the live tests on OpenRouter: `~typesafe/jev-latest`, `inception/mercury-decide:free`.
+Models tested on OpenRouter:
 
-Tested but not recommended: `togethercomputer/tev1-4b-experimental` and `jaredpalmer/kev-4b` fail some live tests or score close to the `threshold`.
-`respan/span-01` and `respan/span-01-lite` do not work: they only support Noul (yes/no) questions and return an error for the `Choice` question the detector asks.
+| Model                                   | Recommended | Test results / limitations                                                                    |
+|-----------------------------------------|-------------|-----------------------------------------------------------------------------------------------|
+| `~typesafe/jev-latest`                  | ✅          | Passes the live tests.                                                                        |
+| `inception/mercury-decide:free`         | ✅          | Passes the live tests.                                                                        |
+| `liquid/d1`                             | ✅          | Passes the live tests.                                                                        |
+| `togethercomputer/tev1-4b-experimental` | ❌          | Fails some live tests or scores close to the `threshold`.                                     |
+| `jaredpalmer/kev-4b`                    | ❌          | Fails some live tests or scores close to the `threshold`.                                     |
+| `respan/span-01`                        | ❌          | Only supports Noul (yes/no) questions; returns an error for the detector's `Choice` question. |
+| `respan/span-01-lite`                   | ❌          | Only supports Noul (yes/no) questions; returns an error for the detector's `Choice` question. |
+
+The live tests cover legitimate, spam and phishing submissions in Italian and English;
+validate the selected model with your own form data before production use.
 
 ## Events and logging
 
@@ -298,8 +306,7 @@ the detector id (`[bot-signature] Known bot User-Agent detected.`).
 The `ThreatDetectedEvent` event carries the `request` and the `exception`. Detectors put in the
 context only derived values (category, score, domain), never request content or full email addresses.
 
-The package does not log detections, listen to the event to log them the way your application needs
-(level, channel, request data):
+The package does not log detections, listen to the event to log them the way your application needs (level, channel, request data):
 
 ```php
 use Illuminate\Support\Facades\Event;
