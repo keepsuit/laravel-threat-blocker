@@ -1,0 +1,5 @@
+interface:
+  display_name: "update-ai-models"
+  short_description: "Find, retest and document OpenRouter decision models"
+policy:
+  allow_implicit_invocation: false

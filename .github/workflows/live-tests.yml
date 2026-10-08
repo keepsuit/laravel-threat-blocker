@@ -10,7 +10,7 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        model: ['~typesafe/jev-latest', 'inception/mercury-decide:free', 'liquid/d1', 'cloudflare/clef', 'cloudflare/clef-flash', 'openai/gpt-6-luna-decisions', 'perplexity/pplx-decider-v1.1-27b']
+        model: ['typesafe/jev-1.13', 'inception/mercury-decide:free', 'liquid/d1', 'cloudflare/clef', 'cloudflare/clef-flash', 'openai/gpt-6-luna-decisions', 'perplexity/pplx-decider-v1.1-27b']
 
     name: openrouter - ${{ matrix.model }}
 

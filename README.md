@@ -283,7 +283,7 @@ so restrict it with `only` and keep it last in the detectors list.
 ],
 ```
 
-Models tested on OpenRouter, ordered by price as of 2026-10-08 (output tokens are free for all of them):
+Models tested on OpenRouter, ordered by lowest provider price as of 2026-10-08 (output tokens are free for all of them):
 
 | Model                                   | Recommended | Input price / 1M tokens | Test results / limitations                                                                    |
 |-----------------------------------------|-------------|-------------------------|-----------------------------------------------------------------------------------------------|
@@ -291,7 +291,7 @@ Models tested on OpenRouter, ordered by price as of 2026-10-08 (output tokens ar
 | `perplexity/pplx-decider-v1.1-27b`      | ✅           | $0.02                   | Passes the live tests with the widest margins.                                                |
 | `cloudflare/clef-flash`                 | ✅           | $0.021                  | Passes the live tests, with smaller margins than `cloudflare/clef`.                           |
 | `liquid/d1`                             | ✅           | $0.04                   | Passes the live tests.                                                                        |
-| `~typesafe/jev-latest`                  | ✅           | $0.042                  | Passes the live tests.                                                                        |
+| `typesafe/jev-1.13`                     | ✅           | $0.042                  | Passes the live tests.                                                                        |
 | `cloudflare/clef`                       | ✅           | $0.042                  | Passes the live tests.                                                                        |
 | `openai/gpt-6-luna-decisions`           | ✅           | $0.10                   | Passes the live tests with the widest margins and is the fastest, but is the most expensive.  |
 | `upstage/solar-decide-flash`            | ❌           | $0.05                   | Passes the live tests, but is 3-7x slower and sometimes hits the timeout (request allowed).   |
