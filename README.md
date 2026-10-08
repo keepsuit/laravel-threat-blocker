@@ -283,17 +283,22 @@ so restrict it with `only` and keep it last in the detectors list.
 ],
 ```
 
-Models tested on OpenRouter:
+Models tested on OpenRouter, ordered by price as of 2026-10-08 (output tokens are free for all of them):
 
-| Model                                   | Recommended | Test results / limitations                                                                    |
-|-----------------------------------------|-------------|-----------------------------------------------------------------------------------------------|
-| `~typesafe/jev-latest`                  | ✅          | Passes the live tests.                                                                        |
-| `inception/mercury-decide:free`         | ✅          | Passes the live tests.                                                                        |
-| `liquid/d1`                             | ✅          | Passes the live tests.                                                                        |
-| `togethercomputer/tev1-4b-experimental` | ❌          | Fails some live tests or scores close to the `threshold`.                                     |
-| `jaredpalmer/kev-4b`                    | ❌          | Fails some live tests or scores close to the `threshold`.                                     |
-| `respan/span-01`                        | ❌          | Only supports Noul (yes/no) questions; returns an error for the detector's `Choice` question. |
-| `respan/span-01-lite`                   | ❌          | Only supports Noul (yes/no) questions; returns an error for the detector's `Choice` question. |
+| Model                                   | Recommended | Input price / 1M tokens | Test results / limitations                                                                    |
+|-----------------------------------------|-------------|-------------------------|-----------------------------------------------------------------------------------------------|
+| `inception/mercury-decide:free`         | ✅           | free                    | Passes the live tests.                                                                        |
+| `perplexity/pplx-decider-v1.1-27b`      | ✅           | $0.02                   | Passes the live tests with the widest margins.                                                |
+| `cloudflare/clef-flash`                 | ✅           | $0.021                  | Passes the live tests, with smaller margins than `cloudflare/clef`.                           |
+| `liquid/d1`                             | ✅           | $0.04                   | Passes the live tests.                                                                        |
+| `~typesafe/jev-latest`                  | ✅           | $0.042                  | Passes the live tests.                                                                        |
+| `cloudflare/clef`                       | ✅           | $0.042                  | Passes the live tests.                                                                        |
+| `openai/gpt-6-luna-decisions`           | ✅           | $0.10                   | Passes the live tests with the widest margins and is the fastest, but is the most expensive.  |
+| `upstage/solar-decide-flash`            | ❌           | $0.05                   | Passes the live tests, but is 3-7x slower and sometimes hits the timeout (request allowed).   |
+| `togethercomputer/tev1-4b-experimental` | ❌           | -                       | Fails some live tests or scores close to the `threshold`.                                     |
+| `jaredpalmer/kev-4b`                    | ❌           | -                       | Fails some live tests or scores close to the `threshold`.                                     |
+| `respan/span-01`                        | ❌           | -                       | Only supports Noul (yes/no) questions; returns an error for the detector's `Choice` question. |
+| `respan/span-01-lite`                   | ❌           | -                       | Only supports Noul (yes/no) questions; returns an error for the detector's `Choice` question. |
 
 The live tests cover legitimate, spam and phishing submissions in Italian and English;
 validate the selected model with your own form data before production use.
