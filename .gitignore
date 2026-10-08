@@ -30,4 +30,5 @@ testbench.yaml
 /docs
 /coverage
 .env
-.claude
+.claude/*
+!.claude/skills
