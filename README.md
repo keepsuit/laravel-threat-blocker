@@ -283,22 +283,33 @@ so restrict it with `only` and keep it last in the detectors list.
 ],
 ```
 
-Models tested on OpenRouter, ordered by lowest provider price as of 2026-10-08 (output tokens are free for all of them):
+Models tested on OpenRouter, ordered by lowest provider price as of 2026-10-18 (output tokens are free for all of them):
 
-| Model                                   | Recommended | Input price / 1M tokens | Test results / limitations                                                                    |
-|-----------------------------------------|-------------|-------------------------|-----------------------------------------------------------------------------------------------|
-| `inception/mercury-decide:free`         | ✅           | free                    | Passes the live tests.                                                                        |
-| `perplexity/pplx-decider-v1.1-27b`      | ✅           | $0.02                   | Passes the live tests with the widest margins.                                                |
-| `cloudflare/clef-flash`                 | ✅           | $0.021                  | Passes the live tests, with smaller margins than `cloudflare/clef`.                           |
-| `liquid/d1`                             | ✅           | $0.04                   | Passes the live tests.                                                                        |
-| `typesafe/jev-1.13`                     | ✅           | $0.042                  | Passes the live tests.                                                                        |
-| `cloudflare/clef`                       | ✅           | $0.042                  | Passes the live tests.                                                                        |
-| `openai/gpt-6-luna-decisions`           | ✅           | $0.10                   | Passes the live tests with the widest margins and is the fastest, but is the most expensive.  |
-| `upstage/solar-decide-flash`            | ❌           | $0.05                   | Passes the live tests, but is 3-7x slower and sometimes hits the timeout (request allowed).   |
-| `togethercomputer/tev1-4b-experimental` | ❌           | -                       | Fails some live tests or scores close to the `threshold`.                                     |
-| `jaredpalmer/kev-4b`                    | ❌           | -                       | Fails some live tests or scores close to the `threshold`.                                     |
-| `respan/span-01`                        | ❌           | -                       | Only supports Noul (yes/no) questions; returns an error for the detector's `Choice` question. |
-| `respan/span-01-lite`                   | ❌           | -                       | Only supports Noul (yes/no) questions; returns an error for the detector's `Choice` question. |
+| Model                                   | Recommended | Input price / 1M tokens | Test results / limitations                                                                                               |
+|-----------------------------------------|-------------|-------------------------|--------------------------------------------------------------------------------------------------------------------------|
+| `inception/mercury-decide:free`         | ✅           | free                    | Passes the live tests.                                                                                                   |
+| `~perplexity/pplx-decider-flash-latest` | ✅           | $0.01                   | Passes the live tests and is the fastest (tested on `perplexity/pplx-decider-flash-v1.2`).                               |
+| `respan/span-02`                        | ✅           | $0.01                   | Passes the live tests.                                                                                                   |
+| `~perplexity/pplx-decider-latest`       | ✅           | $0.02                   | Passes the live tests (tested on `perplexity/pplx-decider-v1.2`).                                                        |
+| `inception/mercury-decide`              | ✅           | $0.02                   | Passes the live tests.                                                                                                   |
+| `cloudflare/clef-flash`                 | ✅           | $0.021                  | Passes the live tests.                                                                                                   |
+| `~typesafe/jev-latest`                  | ✅           | $0.042                  | Passes the live tests (tested on `typesafe/jev-1.14`).                                                                   |
+| `cloudflare/clef`                       | ✅           | $0.042                  | Passes the live tests.                                                                                                   |
+| `liquid/d1-ultra`                       | ✅           | $0.042                  | Passes the live tests.                                                                                                   |
+| `microsoft/microsoft-decision-1`        | ✅           | $0.042                  | Passes the live tests with the widest margins.                                                                           |
+| `openai/gpt-6-luna-decisions`           | ✅           | $0.10                   | Passes the live tests.                                                                                                   |
+| `cloudflare/clef-omni`                  | ✅           | $0.15                   | Passes the live tests, but is the most expensive.                                                                        |
+| `liquid/d1`                             | ❌           | $0.02                   | Passes the live tests, but scores close to the `threshold`.                                                              |
+| `nace-ai/drex-v2.0`                     | ❌           | $0.06                   | Passes the live tests, but scores close to the `threshold`.                                                              |
+| `jaredpalmer/kev-4b`                    | ❌           | $0.042                  | Passes the live tests, but scores close to the `threshold`.                                                              |
+| `togethercomputer/tev1-4b-experimental` | ❌           | $0.042                  | Passes the live tests, but scores close to the `threshold`.                                                              |
+| `upstage/solar-decide-flash`            | ❌           | $0.05                   | Passes the live tests, but scores legitimate submissions up to 0.46.                                                     |
+| `nace-ai/drex-v1.5`                     | ❌           | $0.04                   | Passes the live tests, but scores close to the `threshold` and is 2.3-2.5x slower.                                       |
+| `upstage/solar-decide`                  | ❌           | $0.05                   | Passes the live tests, but is 4.7-5.4x slower.                                                                           |
+| `respan/span-01-lite`                   | ❌           | free                    | Returns an error: `Respan state must be a string or an object with only input (a message array) and output (a message)`. |
+| `respan/span-01-lite:free`              | ❌           | free                    | Returns an error: `Respan state must be a string or an object with only input (a message array) and output (a message)`. |
+| `respan/span-01`                        | ❌           | $0.02                   | Returns an error: `Respan state must be a string or an object with only input (a message array) and output (a message)`. |
+| `scaledown/classify-1`                  | ❌           | $0.04                   | Returns an error: `ScaleDown state must be a string or an object with only text, document, and document_mime_type`.      |
 
 The live tests cover legitimate, spam and phishing submissions in Italian and English;
 validate the selected model with your own form data before production use.
