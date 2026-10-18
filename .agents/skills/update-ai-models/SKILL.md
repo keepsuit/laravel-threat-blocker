@@ -15,10 +15,12 @@ Run from the package root. Commit nothing; leave the diff for the human.
 Fetch the decision-model list with `curl` (WebFetch gets a 404 on OpenRouter):
 
 ```bash
-curl -s 'https://openrouter.ai/api/v1/models?output_modalities=decisions' | jq -r '.data[].id'
+curl -s 'https://openrouter.ai/api/v1/models?output_modalities=decisions' | jq -r '.data[] | "\(.id) \(.alias_target.slug // "")"'
 ```
 
-A **candidate** is a listed id that has no row in the README table. Ids starting with `~` are floating aliases (`~typesafe/jev-latest`); the table pins the version instead (`typesafe/jev-1.13`), so skip them. A new pinned version (`typesafe/jev-1.14`) is a candidate. A `:free` variant of a listed model is a candidate.
+Ids starting with `~` are floating aliases (`~typesafe/jev-latest`) and the second column is the version they point to. The table lists the alias instead of the versions it covers, so users never stay on a retired version: a pinned id whose family has an alias (`typesafe/jev-1.14`) is not a candidate, and a pinned row whose family gained an alias is replaced by the alias.
+
+A **candidate** is a listed id that has no row in the README table. A `:free` variant of a listed model is a candidate.
 
 The **roster** is every table row plus every candidate. A listed row missing from the API list stays in the roster and is reported to the human as possibly retired.
 
@@ -46,6 +48,8 @@ Run one model per command, **twice** (suite time varies run to run):
 THREAT_BLOCKER_AI_SPAM_DETECTOR_MODEL="$ID" vendor/bin/pest --group=live --colors=never 2>&1
 ```
 
+Test an alias by its `~` id. Its note names the version tested (`` (tested on `typesafe/jev-1.14`) ``); a target that changed since the README note is reported to the human.
+
 Record per run: tests passed out of 17, `Duration`, any `AiSpamDetector:` warning (`ProviderConnectionException` is a timeout, which the detector turns into an allowed request), and the `[category] name: ...` probability lines.
 
 Per model derive:
@@ -54,6 +58,8 @@ Per model derive:
 - **legit max** = highest score among the six legitimate cases.
 - **blocked min** = lowest score among the eleven spam and phishing cases.
 - **suite time** = mean of the two `Duration` values.
+
+The probability fields come in any order (`phishing=… spam=…` too): parse them by name. Run `awk`/`sort -n` with `LC_ALL=C`, an Italian locale reads `0.97` as 0.
 
 Done when every roster id has two recorded runs and the four derived figures.
 
@@ -65,7 +71,7 @@ A model is ✅ when all hold:
 
 - both runs pass 17/17 with no provider warning;
 - legit max ≤ 0.2 and blocked min ≥ 0.9, in both runs;
-- suite time is under 2× the median suite time of the roster.
+- suite time is under 2× the median suite time of the roster models that ran the suite (a provider error ends it in ~2s and would drag the median down).
 
 Every other model is ❌, with the reason in its note. Price orders the table and is named in the notes; a ✅ model keeps its ✅ however high its price.
 
@@ -82,7 +88,7 @@ Done when every roster id has ✅ or ❌ and a note.
 
 ## 5. Update the README table
 
-Rewrite the table in place: ✅ rows by price ascending (`free` first), then ❌ rows. Columns: Model, Recommended, Input price / 1M tokens (`$0.042`, `free`, `-` when unknown), Test results / limitations. Pad cells so the pipes line up. Set the line above the table to `Models tested on OpenRouter, ordered by lowest provider price as of <today's date, YYYY-MM-DD> (output tokens are free for all of them):`. Leave the paragraph under the table untouched.
+Rewrite the table in place: ✅ rows by price ascending (`free` first), then ❌ rows by quality: passing with narrow margins (widest margin first), then failing tests, then too slow, then returning a provider error. Columns: Model, Recommended, Input price / 1M tokens (`$0.042`, `free`, `-` when unknown), Test results / limitations. Pad cells so the pipes line up. Set the line above the table to `Models tested on OpenRouter, ordered by lowest provider price as of <today's date, YYYY-MM-DD> (output tokens are free for all of them):`. Leave the paragraph under the table untouched.
 
 Done when the table has exactly one row per roster id.
 
