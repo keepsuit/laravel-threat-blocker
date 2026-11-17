@@ -8,6 +8,8 @@ disable-model-invocation: true
 
 Keeps the AiSpamDetector model list honest: README table (`### AiSpamDetector`, "Models tested on OpenRouter") and the `matrix.model` list in `.github/workflows/live-tests.yml`. The recommended (✅) rows and the matrix hold the same models.
 
+**Price cap**: only models whose input price is below $0.10 per million tokens are tested and listed.
+
 Run from the package root. Commit nothing; leave the diff for the human.
 
 ## 1. Collect models
@@ -36,7 +38,9 @@ curl -s "https://openrouter.ai/api/v1/models/$ID/endpoints" | jq '[.data.endpoin
 
 Check the completion price of every roster id the same way. A non-zero completion price goes into the model's note and changes the "output tokens are free" sentence above the table.
 
-Done when every roster id has a price (`free` for 0).
+Compare the unrounded price against the price cap. An id at or above it leaves the roster: no test, no table row. A listed row that leaves this way is reported to the human with its price.
+
+Done when every roster id has a price (`free` for 0) and is under the price cap.
 
 ## 3. Test
 
@@ -73,7 +77,7 @@ A model is ✅ when all hold:
 - legit max ≤ 0.2 and blocked min ≥ 0.9, in both runs;
 - suite time is under 2× the median suite time of the roster models that ran the suite (a provider error ends it in ~2s and would drag the median down).
 
-Every other model is ❌, with the reason in its note. Price orders the table and is named in the notes; a ✅ model keeps its ✅ however high its price.
+Every other model is ❌, with the reason in its note. Within the price cap, price orders the table and is named in the notes; it never decides the verdict.
 
 Notes state measured facts only:
 
@@ -90,7 +94,7 @@ Done when every roster id has ✅ or ❌ and a note.
 
 Rewrite the table in place: ✅ rows by price ascending (`free` first), then ❌ rows by quality: passing with narrow margins (widest margin first), then failing tests, then too slow, then returning a provider error. Columns: Model, Recommended, Input price / 1M tokens (`$0.042`, `free`, `-` when unknown), Test results / limitations. Pad cells so the pipes line up. Set the line above the table to `Models tested on OpenRouter, ordered by lowest provider price as of <today's date, YYYY-MM-DD> (output tokens are free for all of them):`. Leave the paragraph under the table untouched.
 
-Done when the table has exactly one row per roster id.
+Done when the table has exactly one row per roster id and no row at or above the price cap.
 
 ## 6. Update the workflow
 
@@ -100,4 +104,4 @@ Done when the matrix equals the ✅ rows.
 
 ## 7. Report
 
-Print `git diff --stat`, then a table of id, verdict, price, suite time, legit max, blocked min, and a list of the verdicts that changed. Tell the human what is left to commit.
+Print `git diff --stat`, then a table of id, verdict, price, suite time, legit max, blocked min, a list of the verdicts that changed, and the ids dropped by the price cap. Tell the human what is left to commit.
