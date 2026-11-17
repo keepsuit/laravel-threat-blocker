@@ -46,7 +46,7 @@ class EmailReputationDetector implements Detector, SourceUpdatable
     protected array $whitelistDomains = [];
 
     /**
-     * @var string[]|null
+     * @var array<int|string, true>|null
      */
     protected ?array $disposableDomains = null;
 
@@ -85,7 +85,6 @@ class EmailReputationDetector implements Detector, SourceUpdatable
         $this->remoteListCache->update(
             static::LIST_CACHE_KEY,
             $this->sourceUrl,
-            'domains',
             $this->parseDisposableDomains(...),
         );
     }
@@ -107,7 +106,7 @@ class EmailReputationDetector implements Detector, SourceUpdatable
                 throw $this->threat('Blacklisted email domain detected.', $domain, 'blacklisted');
             }
 
-            if (in_array($domain, $this->getDisposableDomains(), true)) {
+            if (isset($this->getDisposableDomains()[$domain])) {
                 throw $this->threat('Disposable email domain detected.', $domain, 'disposable');
             }
 
@@ -177,7 +176,7 @@ class EmailReputationDetector implements Detector, SourceUpdatable
     }
 
     /**
-     * @return string[]
+     * @return array<int|string, true>
      */
     protected function getDisposableDomains(): array
     {
@@ -185,7 +184,6 @@ class EmailReputationDetector implements Detector, SourceUpdatable
             $this->disposableDomains = $this->remoteListCache->get(
                 static::LIST_CACHE_KEY,
                 $this->sourceUrl,
-                'domains',
                 static::class,
                 $this->parseDisposableDomains(...),
             );

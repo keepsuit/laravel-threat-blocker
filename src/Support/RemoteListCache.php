@@ -20,69 +20,67 @@ class RemoteListCache
     ) {}
 
     /**
-     * @param  Closure(string): array  $parser
+     * @param  Closure(string): array<int|string>  $parser
      */
     public function update(
         string $cacheKey,
         string $sourceUrl,
-        string $itemsKey,
         Closure $parser,
     ): void {
         $lastUpdatedAt = CarbonImmutable::now();
         $items = $parser(Http::throw()->get($sourceUrl)->body());
 
         $this->storage->set($cacheKey, [
-            $itemsKey => $items,
+            'items' => array_fill_keys($items, true),
             'updated_at' => $lastUpdatedAt->timestamp,
         ], self::TTL);
     }
 
     /**
-     * @param  Closure(string): array  $parser
-     * @return array<mixed>
+     * Returns the list items as keys, to look them up with isset().
+     *
+     * @param  Closure(string): array<int|string>  $parser
+     * @return array<int|string, true>
      */
     public function get(
         string $cacheKey,
         string $sourceUrl,
-        string $itemsKey,
         string $name,
         Closure $parser,
     ): array {
-        [$items, $lastUpdatedAt] = $this->read($cacheKey, $itemsKey);
+        [$items, $lastUpdatedAt] = $this->read($cacheKey);
 
         if ($items === null && $this->claimRefresh($cacheKey)) {
             Log::warning("{$name}: source data not found in storage, fetching from source...");
-            rescue(fn () => $this->update($cacheKey, $sourceUrl, $itemsKey, $parser));
+            rescue(fn () => $this->update($cacheKey, $sourceUrl, $parser));
 
-            [$items, $lastUpdatedAt] = $this->read($cacheKey, $itemsKey);
+            [$items, $lastUpdatedAt] = $this->read($cacheKey);
         }
 
         if (
             ($lastUpdatedAt === null || $lastUpdatedAt->isBefore(Carbon::now()->subDays(3)))
             && $this->claimRefresh($cacheKey)
         ) {
-            defer(fn () => $this->update($cacheKey, $sourceUrl, $itemsKey, $parser));
+            defer(fn () => $this->update($cacheKey, $sourceUrl, $parser));
         }
 
         return $items ?? [];
     }
 
     /**
-     * @return array{0: array<mixed>|null, 1: Carbon|null}
+     * Data stored in an older format is treated as missing and fetched again.
+     *
+     * @return array{0: array<int|string, true>|null, 1: Carbon|null}
      */
-    protected function read(string $cacheKey, string $itemsKey): array
+    protected function read(string $cacheKey): array
     {
         $cacheData = $this->storage->get($cacheKey);
 
-        if (! is_array($cacheData)) {
+        if (! is_array($cacheData) || ! is_array($cacheData['items'] ?? null) || ! isset($cacheData['updated_at'])) {
             return [null, null];
         }
 
-        if (! isset($cacheData['updated_at'])) {
-            return [$cacheData, null];
-        }
-
-        return [$cacheData[$itemsKey] ?? [], Carbon::createFromTimestamp($cacheData['updated_at'])];
+        return [$cacheData['items'], Carbon::createFromTimestamp($cacheData['updated_at'])];
     }
 
     /**

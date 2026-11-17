@@ -34,7 +34,7 @@ class AbuseIpDetector implements Detector, SourceUpdatable
     protected array $methods = HttpMethod::DEFAULT;
 
     /**
-     * @var int[]|null
+     * @var array<int|string, true>|null
      */
     protected ?array $abuseIpList = null;
 
@@ -60,20 +60,21 @@ class AbuseIpDetector implements Detector, SourceUpdatable
         $this->remoteListCache->update(
             static::LIST_CACHE_KEY,
             $this->sourceUrl,
-            'ips',
             $this->parseAbuseIpDatabase(...),
         );
 
         $this->abuseIpList = null;
     }
 
+    /**
+     * @return array<int|string, true>
+     */
     protected function getAbuseIpList(): array
     {
         if ($this->abuseIpList === null) {
             $this->abuseIpList = $this->remoteListCache->get(
                 static::LIST_CACHE_KEY,
                 $this->sourceUrl,
-                'ips',
                 static::class,
                 $this->parseAbuseIpDatabase(...),
             );
@@ -120,7 +121,7 @@ class AbuseIpDetector implements Detector, SourceUpdatable
             return;
         }
 
-        if (in_array($longIp, $this->getAbuseIpList(), true)) {
+        if (isset($this->getAbuseIpList()[$longIp])) {
             throw new ThreatDetectedException($this->id(), 'AbuseIP database match detected.');
         }
     }

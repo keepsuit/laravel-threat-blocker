@@ -138,7 +138,7 @@ test('updates and caches the disposable domain source', function () {
 
     expect(app(StorageDriver::class)->get(EmailReputationDetector::LIST_CACHE_KEY))
         ->toMatchArray([
-            'domains' => ['blocked.example'],
+            'items' => ['blocked.example' => true],
         ])
         ->updated_at->toBeInt();
 });
