@@ -1,8 +1,10 @@
 <?php
 
+use Illuminate\Support\Defer\DeferredCallbackCollection;
 use Keepsuit\ThreatBlocker\Contracts\StorageDriver;
 use Keepsuit\ThreatBlocker\Detectors\AbuseIpDetector;
 use Keepsuit\ThreatBlocker\Enums\AbuseIpSource;
+use Keepsuit\ThreatBlocker\Support\RemoteListCache;
 use Keepsuit\ThreatBlocker\ThreatBlocker;
 use Spatie\TestTime\TestTime;
 
@@ -42,7 +44,7 @@ test('update abuseip detector source', function () {
 
     expect($cacheData)->toBeArray()
         ->{'updated_at'}->toBe(now()->timestamp)
-        ->{'ips'}->toHaveCount(52204);
+        ->{'items'}->toHaveCount(52204);
 });
 
 test('cached source expires after one year without updates', function () {
@@ -61,25 +63,62 @@ test('cached source expires after one year without updates', function () {
     expect(app(StorageDriver::class)->get('abuseip-list'))->toBeNull();
 });
 
-test('load cached data with old format', function () {
-    app(StorageDriver::class)->set('abuseip-list', [350046382, 350046449, 350103321]);
+test('fetches again cached data in an older format', function (array $cacheData) {
+    Http::fake(['*' => Http::response("1.0.170.118\n")]);
+
+    app(StorageDriver::class)->set('abuseip-list', $cacheData);
 
     $detector = app(ThreatBlocker::class)->getDetector(AbuseIpDetector::class);
 
     expect(invade($detector))
-        ->getAbuseIpList()->toBe([350046382, 350046449, 350103321]);
-});
+        ->getAbuseIpList()->toBe([ip2long('1.0.170.118') => true]);
+})->with([
+    'plain list' => [[350046382]],
+    'ips list' => [['ips' => [350046382], 'updated_at' => 1]],
+]);
 
-test('load cached data with new format', function () {
+test('load cached data', function () {
     $timestamp = now()->subDay()->timestamp;
 
     app(StorageDriver::class)->set('abuseip-list', [
-        'ips' => [350046382, 350046449, 350103321],
+        'items' => [350046382 => true, 350046449 => true],
         'updated_at' => $timestamp,
     ]);
 
     $detector = app(ThreatBlocker::class)->getDetector(AbuseIpDetector::class);
 
     expect(invade($detector))
-        ->getAbuseIpList()->toBe([350046382, 350046449, 350103321]);
+        ->getAbuseIpList()->toBe([350046382 => true, 350046449 => true]);
+});
+
+test('a failed fetch of a missing source is not retried by every request', function () {
+    Http::fake(['*' => Http::response('', 500)]);
+
+    $remoteListCache = app(RemoteListCache::class);
+    $fetch = fn () => $remoteListCache->get('abuseip-list', 'https://example.test/list', 'test', fn () => []);
+
+    expect($fetch())->toBe([]);
+    expect($fetch())->toBe([]);
+    Http::assertSentCount(1);
+
+    TestTime::addSeconds(RemoteListCache::REFRESH_RETRY_AFTER + 1);
+
+    $fetch();
+    Http::assertSentCount(2);
+});
+
+test('a stale source is refreshed once in the background', function () {
+    app(StorageDriver::class)->set('abuseip-list', [
+        'items' => [350046382 => true],
+        'updated_at' => now()->subDays(4)->timestamp,
+    ]);
+
+    $remoteListCache = app(RemoteListCache::class);
+
+    foreach (range(1, 3) as $i) {
+        expect($remoteListCache->get('abuseip-list', 'https://example.test/list', 'test', fn () => []))
+            ->toBe([350046382 => true]);
+    }
+
+    expect(app(DeferredCallbackCollection::class))->toHaveCount(1);
 });
