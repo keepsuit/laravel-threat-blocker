@@ -1,4 +1,4 @@
-# Block threat request to your application
+# Block threat requests to your Laravel application
 
 [![Latest Version on Packagist](https://img.shields.io/packagist/v/keepsuit/laravel-threat-blocker.svg?style=flat-square)](https://packagist.org/packages/keepsuit/laravel-threat-blocker)
 [![GitHub Tests Action Status](https://img.shields.io/github/actions/workflow/status/keepsuit/laravel-threat-blocker/run-tests.yml?branch=main&label=tests&style=flat-square)](https://github.com/keepsuit/laravel-threat-blocker/actions?query=workflow%3Arun-tests+branch%3Amain)
@@ -48,6 +48,17 @@ php artisan vendor:publish --tag="laravel-threat-blocker-config"
 This is the contents of the published config file:
 
 ```php
+<?php
+
+use Keepsuit\ThreatBlocker\Detectors\AbuseIpDetector;
+use Keepsuit\ThreatBlocker\Detectors\AiSpamDetector;
+use Keepsuit\ThreatBlocker\Detectors\BotSignatureDetector;
+use Keepsuit\ThreatBlocker\Detectors\EmailReputationDetector;
+use Keepsuit\ThreatBlocker\Detectors\FormHoneypotDetector;
+use Keepsuit\ThreatBlocker\Enums\AbuseIpSource;
+use Keepsuit\ThreatBlocker\Enums\EmailReputationSource;
+use Keepsuit\ThreatBlocker\Responders\BlankPageResponder;
+
 return [
     /**
      * This option enables or disables the Threat Blocker protection.
@@ -74,11 +85,11 @@ return [
         ],
     ],
 
-    /*
+    /**
      * The responder class that will be used to respond to detected threats.
      * You can create your own responder by implementing the Keepsuit\ThreatBlocker\Contracts\ThreatResponder interface.
      */
-    'responder' => \Keepsuit\ThreatBlocker\Responders\BlankPageResponder::class,
+    'responder' => BlankPageResponder::class,
 
     /**
      * The following list of "detectors" will be used to identify threats.
@@ -88,10 +99,10 @@ return [
         /**
          * Block requests coming from IPs listed in the AbuseIPDB database.
          */
-        \Keepsuit\ThreatBlocker\Detectors\AbuseIpDetector::class => [
+        AbuseIpDetector::class => [
             'enabled' => env('THREAT_BLOCKER_ABUSE_IP_DETECTOR_ENABLED', true),
             // Source url for AbuseIP data, it can be a custom url or one of the predefined sources (provided by https://github.com/borestad/blocklist-abuseipdb)
-            'source' => \Keepsuit\ThreatBlocker\Enums\AbuseIpSource::Days60->url(),
+            'source' => AbuseIpSource::Days60->url(),
             'blacklist' => [
                 // These IPs will always be blocked by the AbuseIpDetector
             ],
@@ -103,22 +114,25 @@ return [
         /**
          * Block registrations using disposable or undeliverable email domains.
          */
-        \Keepsuit\ThreatBlocker\Detectors\EmailReputationDetector::class => [
+        EmailReputationDetector::class => [
             'enabled' => env('THREAT_BLOCKER_EMAIL_REPUTATION_DETECTOR_ENABLED', true),
             // Source URL for the disposable email domain list, one domain per line.
-            'source' => \Keepsuit\ThreatBlocker\Enums\EmailReputationSource::DisposableEmailDomains->url(),
-            // Empty fields disable this detector. `email` also matches nested terminal fields;
-            // use patterns such as `contacts.*.email` for a specific nested path.
+            'source' => EmailReputationSource::DisposableEmailDomains->url(),
+            // Empty fields disable this detector. Simple names also match nested input fields.
             'fields' => ['email'],
             'check_mx' => true,
             'mx_cache_ttl' => 86400,
-            'blacklist' => [],
-            'whitelist' => [],
+            'blacklist' => [
+                // These domains will always be blocked by the EmailReputationDetector.
+            ],
+            'whitelist' => [
+                // These domains will never be blocked by the EmailReputationDetector.
+            ],
         ],
         /**
          * Block POST requests that look like automated form submissions based on their headers.
          */
-        \Keepsuit\ThreatBlocker\Detectors\BotSignatureDetector::class => [
+        BotSignatureDetector::class => [
             'enabled' => env('THREAT_BLOCKER_BOT_SIGNATURE_DETECTOR_ENABLED', true),
             'rules' => [
                 'missing_user_agent' => true,
@@ -126,31 +140,45 @@ return [
                 'missing_accept_language' => false,
                 'invalid_referer' => false,
             ],
-            // Replace the defaults, or use array_merge() to extend them.
-            'user_agent_patterns' => \Keepsuit\ThreatBlocker\Detectors\BotSignatureDetector::DEFAULT_USER_AGENT_PATTERNS,
+            // Patterns replace the defaults. Use array_merge() to extend them.
+            'user_agent_patterns' => BotSignatureDetector::DEFAULT_USER_AGENT_PATTERNS,
         ],
         /**
          * Block requests that contain form submissions with honeypot fields filled out.
          * This detector requires spatie/laravel-honeypot package to be installed and configured.
          */
-        \Keepsuit\ThreatBlocker\Detectors\FormHoneypotDetector::class => [
+        FormHoneypotDetector::class => [
             'enabled' => env('THREAT_BLOCKER_FORM_HONEYPOT_DETECTOR_ENABLED', true),
-            // Require honeypot fields on every POST request or selected URI patterns.
-            // Examples: true, ['/contact', '/newsletter/*']
+            /**
+             * Require honeypot fields on every POST request or only on the
+             * configured URI patterns. The default preserves the optional
+             * honeypot behavior.
+             *
+             * Examples: true, ['/contact', '/newsletter/*']
+             */
             'strict' => false,
         ],
         /**
          * Block POST requests classified as spam or phishing by an AI model.
+         * This detector requires the laravel/ai package and a provider that supports classification
+         * (typesafe or openrouter). Form data is sent to the provider, token, password and secret fields are excluded.
          */
-        \Keepsuit\ThreatBlocker\Detectors\AiSpamDetector::class => [
+        AiSpamDetector::class => [
             'enabled' => env('THREAT_BLOCKER_AI_SPAM_DETECTOR_ENABLED', false),
+            // Null falls back to laravel/ai classification defaults.
             'provider' => env('THREAT_BLOCKER_AI_SPAM_DETECTOR_PROVIDER'),
             'model' => env('THREAT_BLOCKER_AI_SPAM_DETECTOR_MODEL'),
+            // ['*'] sends all input. Empty fields disable this detector. Matching follows EmailReputationDetector.
             'fields' => ['*'],
+            // URI patterns to evaluate, empty means all URIs. Example: ['/contact', '/newsletter/*']
             'only' => [],
+            // URI pattern => extra instructions, appended to the default instructions.
             'context' => [],
+            // Block when the spam + phishing probability reaches this value.
             'threshold' => env('THREAT_BLOCKER_AI_SPAM_DETECTOR_THRESHOLD', 0.8),
+            // Maximum number of characters sent to the provider.
             'max_length' => 4000,
+            // Seconds to wait for the provider.
             'timeout' => 5,
         ],
     ],
