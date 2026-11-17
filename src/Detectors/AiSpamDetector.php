@@ -27,9 +27,11 @@ class AiSpamDetector implements Detector
         INSTRUCTIONS;
 
     /**
+     * Case-insensitive field patterns never sent to the provider.
+     *
      * @var string[]
      */
-    public const array EXCLUDED_FIELDS = ['_token', '_method', 'password', 'password_confirmation', 'current_password'];
+    public const array EXCLUDED_FIELDS = ['_method', '*token*', '*password*', '*secret*'];
 
     /**
      * @var HttpMethod[]
@@ -185,7 +187,7 @@ class AiSpamDetector implements Detector
     {
         $state = [];
         $remaining = $this->maxLength;
-        $excludedFields = [...self::EXCLUDED_FIELDS, config('honeypot.valid_from_field_name')];
+        $excludedFields = [...self::EXCLUDED_FIELDS, strtolower((string) config('honeypot.valid_from_field_name'))];
 
         foreach (Arr::dot($request->input()) as $key => $value) {
             if ($remaining <= 0) {
@@ -196,7 +198,7 @@ class AiSpamDetector implements Detector
 
             if (
                 ! is_scalar($value)
-                || in_array(Str::afterLast($key, '.'), $excludedFields, true)
+                || InputFields::matches($excludedFields, Str::afterLast(strtolower($key), '.'))
                 || ! InputFields::matches($this->fields, $key)
             ) {
                 continue;
