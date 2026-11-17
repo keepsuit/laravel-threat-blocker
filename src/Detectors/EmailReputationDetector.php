@@ -111,8 +111,8 @@ class EmailReputationDetector implements Detector, SourceUpdatable
                 throw $this->threat('Disposable email domain detected.', $domain, 'disposable');
             }
 
-            if ($this->checkMx && ! $this->hasMxRecord($domain)) {
-                throw $this->threat('Email domain has no MX record.', $domain, 'no_mx');
+            if ($this->checkMx && $this->acceptsMail($domain) === false) {
+                throw $this->threat('Email domain does not accept mail.', $domain, 'no_mx');
             }
         }
     }
@@ -161,7 +161,10 @@ class EmailReputationDetector implements Detector, SourceUpdatable
         return rtrim(strtolower(substr($email, $atPosition + 1)), '.');
     }
 
-    protected function hasMxRecord(string $domain): bool
+    /**
+     * Null when the DNS lookup failed: the request is allowed and the result is not cached.
+     */
+    protected function acceptsMail(string $domain): ?bool
     {
         $cacheKey = 'email-reputation-mx-'.sha1($domain);
         $cached = $this->storage->get($cacheKey);
@@ -170,10 +173,13 @@ class EmailReputationDetector implements Detector, SourceUpdatable
             return (bool) $cached;
         }
 
-        $hasMxRecord = $this->dnsResolver->hasMxRecord($domain);
-        $this->storage->set($cacheKey, $hasMxRecord, $this->mxCacheTtl);
+        $acceptsMail = $this->dnsResolver->acceptsMail($domain);
 
-        return $hasMxRecord;
+        if ($acceptsMail !== null) {
+            $this->storage->set($cacheKey, $acceptsMail, $this->mxCacheTtl);
+        }
+
+        return $acceptsMail;
     }
 
     /**

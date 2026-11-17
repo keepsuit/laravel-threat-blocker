@@ -4,5 +4,8 @@ namespace Keepsuit\ThreatBlocker\Contracts;
 
 interface DnsResolver
 {
-    public function hasMxRecord(string $domain): bool;
+    /**
+     * Whether the domain can receive email, null when the DNS lookup fails.
+     */
+    public function acceptsMail(string $domain): ?bool;
 }

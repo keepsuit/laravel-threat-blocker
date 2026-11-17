@@ -153,7 +153,7 @@ test('blocks domains without an MX record and caches the DNS result', function (
     {
         public int $calls = 0;
 
-        public function hasMxRecord(string $domain): bool
+        public function acceptsMail(string $domain): ?bool
         {
             $this->calls++;
 
@@ -171,12 +171,41 @@ test('blocks domains without an MX record and caches the DNS result', function (
     expect($resolver->calls)->toBe(1);
 });
 
+test('allows the request and retries the lookup when DNS fails', function () {
+    config()->set(
+        'threat-blocker.detectors.'.EmailReputationDetector::class.'.check_mx',
+        true,
+    );
+
+    $resolver = new class implements DnsResolver
+    {
+        public int $calls = 0;
+
+        public function acceptsMail(string $domain): ?bool
+        {
+            $this->calls++;
+
+            return null;
+        }
+    };
+
+    app()->bind(DnsResolver::class, fn () => $resolver);
+
+    $detector = app(ThreatBlocker::class)->getDetector(EmailReputationDetector::class);
+    $request = Request::create('/register', 'POST', ['email' => 'user@flaky-dns.example']);
+
+    $detector?->check($request);
+    $detector?->check($request);
+
+    expect($resolver->calls)->toBe(2);
+});
+
 test('does not resolve MX when the disposable list already matches', function () {
     $resolver = new class implements DnsResolver
     {
         public int $calls = 0;
 
-        public function hasMxRecord(string $domain): bool
+        public function acceptsMail(string $domain): ?bool
         {
             $this->calls++;
 
