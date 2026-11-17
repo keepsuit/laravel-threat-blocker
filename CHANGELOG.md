@@ -2,6 +2,21 @@
 
 All notable changes to `laravel-threat-blocker` will be documented in this file.
 
+## 1.0.0 - 2026-11-17
+
+First stable release. It contains breaking changes for custom `DnsResolver` implementations and for code referencing `UpdateAbuseIpCommand` or `ThreatBlocker::$enabled`: see the [upgrade guide](https://github.com/keepsuit/laravel-threat-blocker/blob/main/UPGRADE.md#upgrading-from-02x-to-100).
+
+After upgrading, run `php artisan threat-blocker:update` on deploy: the cached lists use a new format and are fetched again.
+
+### What's Changed
+
+* fix(email-reputation): avoid MX check false positives by @cappuc in https://github.com/keepsuit/laravel-threat-blocker/pull/20
+* fix(remote-list): single refresh and O(1) lookups for remote lists by @cappuc in https://github.com/keepsuit/laravel-threat-blocker/pull/21
+* fix(ai-spam): never send token, password or secret fields to the provider by @cappuc in https://github.com/keepsuit/laravel-threat-blocker/pull/22
+* chore: prepare 1.0 (command rename, metadata cleanup, upgrade guide) by @cappuc in https://github.com/keepsuit/laravel-threat-blocker/pull/23
+
+**Full Changelog**: https://github.com/keepsuit/laravel-threat-blocker/compare/0.2.1...1.0.0
+
 ## 0.2.1 - 2026-10-02
 
 ### What's Changed
