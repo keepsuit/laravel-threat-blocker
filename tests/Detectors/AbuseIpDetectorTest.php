@@ -1,8 +1,10 @@
 <?php
 
+use Illuminate\Support\Defer\DeferredCallbackCollection;
 use Keepsuit\ThreatBlocker\Contracts\StorageDriver;
 use Keepsuit\ThreatBlocker\Detectors\AbuseIpDetector;
 use Keepsuit\ThreatBlocker\Enums\AbuseIpSource;
+use Keepsuit\ThreatBlocker\Support\RemoteListCache;
 use Keepsuit\ThreatBlocker\ThreatBlocker;
 use Spatie\TestTime\TestTime;
 
@@ -82,4 +84,36 @@ test('load cached data with new format', function () {
 
     expect(invade($detector))
         ->getAbuseIpList()->toBe([350046382, 350046449, 350103321]);
+});
+
+test('a failed fetch of a missing source is not retried by every request', function () {
+    Http::fake(['*' => Http::response('', 500)]);
+
+    $remoteListCache = app(RemoteListCache::class);
+    $fetch = fn () => $remoteListCache->get('abuseip-list', 'https://example.test/list', 'ips', 'test', fn () => []);
+
+    expect($fetch())->toBe([]);
+    expect($fetch())->toBe([]);
+    Http::assertSentCount(1);
+
+    TestTime::addSeconds(RemoteListCache::REFRESH_RETRY_AFTER + 1);
+
+    $fetch();
+    Http::assertSentCount(2);
+});
+
+test('a stale source is refreshed once in the background', function () {
+    app(StorageDriver::class)->set('abuseip-list', [
+        'ips' => [350046382],
+        'updated_at' => now()->subDays(4)->timestamp,
+    ]);
+
+    $remoteListCache = app(RemoteListCache::class);
+
+    foreach (range(1, 3) as $i) {
+        expect($remoteListCache->get('abuseip-list', 'https://example.test/list', 'ips', 'test', fn () => []))
+            ->toBe([350046382]);
+    }
+
+    expect(app(DeferredCallbackCollection::class))->toHaveCount(1);
 });

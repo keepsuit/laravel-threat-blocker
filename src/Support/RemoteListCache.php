@@ -13,6 +13,8 @@ class RemoteListCache
 {
     public const int TTL = 31536000;
 
+    public const int REFRESH_RETRY_AFTER = 300;
+
     public function __construct(
         protected StorageDriver $storage,
     ) {}
@@ -46,38 +48,58 @@ class RemoteListCache
         string $name,
         Closure $parser,
     ): array {
-        $cacheData = $this->storage->get($cacheKey);
-        $lastUpdatedAt = null;
-        $items = null;
+        [$items, $lastUpdatedAt] = $this->read($cacheKey, $itemsKey);
 
-        if (is_array($cacheData)) {
-            if (isset($cacheData['updated_at'])) {
-                $lastUpdatedAt = Carbon::createFromTimestamp($cacheData['updated_at']);
-                $items = $cacheData[$itemsKey] ?? [];
-            } else {
-                $items = $cacheData;
-            }
-        }
-
-        if ($items === null) {
+        if ($items === null && $this->claimRefresh($cacheKey)) {
             Log::warning("{$name}: source data not found in storage, fetching from source...");
             rescue(fn () => $this->update($cacheKey, $sourceUrl, $itemsKey, $parser));
 
-            $cacheData = $this->storage->get($cacheKey);
-            if (is_array($cacheData)) {
-                $lastUpdatedAt = isset($cacheData['updated_at'])
-                    ? Carbon::createFromTimestamp($cacheData['updated_at'])
-                    : null;
-                $items = isset($cacheData['updated_at'])
-                    ? ($cacheData[$itemsKey] ?? [])
-                    : $cacheData;
-            }
+            [$items, $lastUpdatedAt] = $this->read($cacheKey, $itemsKey);
         }
 
-        if ($lastUpdatedAt === null || $lastUpdatedAt->isBefore(Carbon::now()->subDays(3))) {
+        if (
+            ($lastUpdatedAt === null || $lastUpdatedAt->isBefore(Carbon::now()->subDays(3)))
+            && $this->claimRefresh($cacheKey)
+        ) {
             defer(fn () => $this->update($cacheKey, $sourceUrl, $itemsKey, $parser));
         }
 
-        return is_array($items) ? $items : [];
+        return $items ?? [];
+    }
+
+    /**
+     * @return array{0: array<mixed>|null, 1: Carbon|null}
+     */
+    protected function read(string $cacheKey, string $itemsKey): array
+    {
+        $cacheData = $this->storage->get($cacheKey);
+
+        if (! is_array($cacheData)) {
+            return [null, null];
+        }
+
+        if (! isset($cacheData['updated_at'])) {
+            return [$cacheData, null];
+        }
+
+        return [$cacheData[$itemsKey] ?? [], Carbon::createFromTimestamp($cacheData['updated_at'])];
+    }
+
+    /**
+     * Lets a single request refresh the list, the others keep using the cached one.
+     * A failed refresh is retried after REFRESH_RETRY_AFTER seconds.
+     */
+    protected function claimRefresh(string $cacheKey): bool
+    {
+        $flagKey = $cacheKey.'-refreshing';
+
+        // ponytail: get + set is not atomic, a few concurrent requests can still refresh together; use a cache lock if that matters.
+        if ($this->storage->get($flagKey) !== null) {
+            return false;
+        }
+
+        $this->storage->set($flagKey, true, self::REFRESH_RETRY_AFTER);
+
+        return true;
     }
 }
