@@ -13,7 +13,7 @@ final class ThreatBlocker
     protected array $detectors = [];
 
     public function __construct(
-        public bool $enabled = true,
+        protected bool $enabled = true,
     ) {}
 
     public function enabled(): bool

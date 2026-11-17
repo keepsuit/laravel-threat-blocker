@@ -3,7 +3,7 @@
 namespace Keepsuit\ThreatBlocker;
 
 use Illuminate\Foundation\Application;
-use Keepsuit\ThreatBlocker\Commands\UpdateAbuseIpCommand;
+use Keepsuit\ThreatBlocker\Commands\UpdateSourcesCommand;
 use Keepsuit\ThreatBlocker\Contracts\Detector;
 use Keepsuit\ThreatBlocker\Contracts\DnsResolver;
 use Keepsuit\ThreatBlocker\Contracts\StorageDriver;
@@ -20,7 +20,7 @@ class ThreatBlockerServiceProvider extends PackageServiceProvider
             ->name('laravel-threat-blocker')
             ->hasConfigFile()
             ->hasCommands(
-                UpdateAbuseIpCommand::class,
+                UpdateSourcesCommand::class,
             );
     }
 
