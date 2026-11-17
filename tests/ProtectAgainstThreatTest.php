@@ -253,7 +253,7 @@ it('blocks requests with an email domain without an MX record', function () {
 
     app()->bind(DnsResolver::class, fn () => new class implements DnsResolver
     {
-        public function hasMxRecord(string $domain): bool
+        public function acceptsMail(string $domain): ?bool
         {
             return false;
         }

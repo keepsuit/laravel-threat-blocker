@@ -234,7 +234,8 @@ custom URL serving one domain per line.
 - `fields` are the input fields to check. An empty list disables the detector. `email` also matches nested fields
   with that name, use patterns such as `contacts.*.email` for a specific nested path.
 - `blacklist` domains are always blocked, `whitelist` domains are never blocked.
-- `check_mx` blocks domains without an MX record, the DNS result is cached for `mx_cache_ttl` seconds.
+- `check_mx` blocks domains that do not accept mail: no MX record and no A/AAAA fallback, or a null MX. The DNS result
+  is cached for `mx_cache_ttl` seconds; when the lookup fails the request is allowed and nothing is cached.
 
 ### BotSignatureDetector
 
