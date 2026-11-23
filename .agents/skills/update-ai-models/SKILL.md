@@ -38,9 +38,15 @@ curl -s "https://openrouter.ai/api/v1/models/$ID/endpoints" | jq '[.data.endpoin
 
 Check the completion price of every roster id the same way. A non-zero completion price goes into the model's note and changes the "output tokens are free" sentence above the table.
 
+Mark each roster id ZDR when it has a zero data retention endpoint (an alias by the version it points to):
+
+```bash
+curl -s https://openrouter.ai/api/v1/endpoints/zdr | jq -r '.data[].model_id' | sort -u
+```
+
 Compare the unrounded price against the price cap. An id at or above it leaves the roster: no test, no table row. A listed row that leaves this way is reported to the human with its price.
 
-Done when every roster id has a price (`free` for 0) and is under the price cap.
+Done when every roster id has a price (`free` for 0), is under the price cap and has a ZDR mark.
 
 ## 3. Test
 
@@ -92,7 +98,7 @@ Done when every roster id has ✅ or ❌ and a note.
 
 ## 5. Update the README table
 
-Rewrite the table in place: ✅ rows by price ascending (`free` first), then ❌ rows by quality: passing with narrow margins (widest margin first), then failing tests, then too slow, then returning a provider error. Columns: Model, Recommended, Input price / 1M tokens (`$0.042`, `free`, `-` when unknown), Test results / limitations. Pad cells so the pipes line up. Set the line above the table to `Models tested on OpenRouter, ordered by lowest provider price as of <today's date, YYYY-MM-DD> (output tokens are free for all of them):`. Leave the paragraph under the table untouched.
+Rewrite the table in place: ✅ rows by price ascending (`free` first), then ❌ rows by quality: passing with narrow margins (widest margin first), then failing tests, then too slow, then returning a provider error. Columns: Model, Recommended, ZDR (✅/❌), Input price / 1M tokens (`$0.042`, `free`, `-` when unknown), Test results / limitations. Pad cells so the pipes line up. Set the line above the table to `Models tested on OpenRouter, ordered by lowest provider price as of <today's date, YYYY-MM-DD> (output tokens are free for all of them):`. Leave the paragraph under the table untouched.
 
 Done when the table has exactly one row per roster id and no row at or above the price cap.
 
