@@ -268,3 +268,16 @@ test('uses the configured provider and model', function () {
     Classification::assertClassified(fn (ClassificationPrompt $prompt) => $prompt->provider->name() === 'typesafe'
         && $prompt->model === 'custom-model');
 });
+
+test('requests zero data retention routing only on openrouter when zdr is enabled', function (?bool $zdr, string $provider, array $expected) {
+    useAiSpamOptions(array_filter(['provider' => $provider, 'model' => 'custom-model', 'zdr' => $zdr], fn ($value) => $value !== null));
+    fakeAiCategory(['legitimate' => 1.0, 'spam' => 0.0, 'phishing' => 0.0]);
+
+    aiSpamDetector()->check(aiSpamPost());
+
+    Classification::assertClassified(fn (ClassificationPrompt $prompt) => $prompt->providerOptions === $expected);
+})->with([
+    'default' => [null, 'openrouter', []],
+    'enabled on openrouter' => [true, 'openrouter', ['provider' => ['zdr' => true]]],
+    'enabled on typesafe' => [true, 'typesafe', []],
+]);

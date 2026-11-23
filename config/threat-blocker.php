@@ -111,7 +111,7 @@ return [
         /**
          * Block POST requests classified as spam or phishing by an AI model.
          * This detector requires the laravel/ai package and a provider that supports classification
-         * (typesafe or openrouter). Form data is sent to the provider, token, password and secret fields are excluded.
+         * (typesafe, openrouter, or openai from laravel/ai 1.2). Form data is sent to the provider, token, password and secret fields are excluded.
          */
         AiSpamDetector::class => [
             'enabled' => env('THREAT_BLOCKER_AI_SPAM_DETECTOR_ENABLED', false),
@@ -130,6 +130,8 @@ return [
             'max_length' => 4000,
             // Seconds to wait for the provider.
             'timeout' => 5,
+            // OpenRouter only: route requests to zero data retention endpoints. Models without one return an error and the request is allowed.
+            'zdr' => env('THREAT_BLOCKER_AI_SPAM_DETECTOR_ZDR', false),
         ],
     ],
 ];
