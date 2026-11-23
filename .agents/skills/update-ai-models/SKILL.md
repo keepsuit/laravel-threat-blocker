@@ -36,6 +36,8 @@ For each roster id, take the lowest input price across its providers (the figure
 curl -s "https://openrouter.ai/api/v1/models/$ID/endpoints" | jq '[.data.endpoints[].pricing.prompt|tonumber]|min*1000000'
 ```
 
+Check every other non-zero field of `.pricing` too. A `request` price is charged on every call: add `request / 300 * 1000000` to the input price (a typical detector request is about 300 input tokens). Fees that only apply to features the detector does not use (`web_search`, `input_cache_*`) are ignored, but check one real call's `usage.cost` for models that have them.
+
 Check the completion price of every roster id the same way. A non-zero completion price goes into the model's note and changes the "output tokens are free" sentence above the table.
 
 Mark each roster id ZDR when it has a zero data retention endpoint (an alias by the version it points to):

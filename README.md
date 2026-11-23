@@ -318,7 +318,6 @@ Models tested on OpenRouter, ordered by lowest provider price as of 2026-11-23 (
 
 | Model                                     | Recommended | ZDR | Input price / 1M tokens | Test results / limitations                                                                                                   |
 |-------------------------------------------|-------------|-----|-------------------------|------------------------------------------------------------------------------------------------------------------------------|
-| `parallel/decisions-fast`                 | ✅           | ❌   | free                    | Passes the live tests.                                                                                                       |
 | `respan/span-02`                          | ✅           | ❌   | $0.01                   | Passes the live tests.                                                                                                       |
 | `cloudflare/clef-flash`                   | ✅           | ✅   | $0.019                  | Passes the live tests.                                                                                                       |
 | `~liquid/d1-latest`                       | ✅           | ✅   | $0.02                   | Passes the live tests (tested on `liquid/d1.2`).                                                                             |
