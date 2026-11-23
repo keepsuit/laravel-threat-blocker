@@ -2,6 +2,23 @@
 
 All notable changes to `laravel-threat-blocker` will be documented in this file.
 
+## 1.1.0 - 2026-11-23
+
+`AiSpamDetector` can now require zero data retention on OpenRouter: set `THREAT_BLOCKER_AI_SPAM_DETECTOR_ZDR=true` (default `false`) and requests are routed only to ZDR endpoints. A model without a ZDR endpoint returns an error and the request is allowed, so check the `ZDR` column of the [tested models table](https://github.com/keepsuit/laravel-threat-blocker#aispamdetector) before enabling it.
+
+No breaking changes. If the config file is published, add the new key to the `AiSpamDetector` options:
+
+```php
+'zdr' => env('THREAT_BLOCKER_AI_SPAM_DETECTOR_ZDR', false),
+
+```
+### What's Changed
+
+* chore(ai-spam): cap tested models below $0.10 and refresh OpenRouter list by @cappuc in https://github.com/keepsuit/laravel-threat-blocker/pull/24
+* feat(ai-spam): opt-in ZDR routing for OpenRouter by @cappuc in https://github.com/keepsuit/laravel-threat-blocker/pull/26
+
+**Full Changelog**: https://github.com/keepsuit/laravel-threat-blocker/compare/1.0.0...1.1.0
+
 ## 1.0.0 - 2026-11-17
 
 First stable release. It contains breaking changes for custom `DnsResolver` implementations and for code referencing `UpdateAbuseIpCommand` or `ThreatBlocker::$enabled`: see the [upgrade guide](https://github.com/keepsuit/laravel-threat-blocker/blob/main/UPGRADE.md#upgrading-from-02x-to-100).
