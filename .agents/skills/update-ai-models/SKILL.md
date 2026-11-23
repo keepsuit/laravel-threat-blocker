@@ -8,7 +8,7 @@ disable-model-invocation: true
 
 Keeps the AiSpamDetector model list honest: README table (`### AiSpamDetector`, "Models tested on OpenRouter") and the `matrix.model` list in `.github/workflows/live-tests.yml`. The recommended (✅) rows and the matrix hold the same models.
 
-**Price cap**: only models whose input price is below $0.10 per million tokens are tested and listed.
+**Price cap**: only models whose input price is at most $0.10 per million tokens are tested and listed.
 
 Run from the package root. Commit nothing; leave the diff for the human.
 
@@ -44,9 +44,9 @@ Mark each roster id ZDR when it has a zero data retention endpoint (an alias by 
 curl -s https://openrouter.ai/api/v1/endpoints/zdr | jq -r '.data[].model_id' | sort -u
 ```
 
-Compare the unrounded price against the price cap. An id at or above it leaves the roster: no test, no table row. A listed row that leaves this way is reported to the human with its price.
+Compare the rounded price against the price cap (the API returns float noise such as `0.09999999999999999`). An id above it leaves the roster: no test, no table row. A listed row that leaves this way is reported to the human with its price.
 
-Done when every roster id has a price (`free` for 0), is under the price cap and has a ZDR mark.
+Done when every roster id has a price (`free` for 0), is within the price cap and has a ZDR mark.
 
 ## 3. Test
 
@@ -100,7 +100,7 @@ Done when every roster id has ✅ or ❌ and a note.
 
 Rewrite the table in place: ✅ rows by price ascending (`free` first), then ❌ rows by quality: passing with narrow margins (widest margin first), then failing tests, then too slow, then returning a provider error. Columns: Model, Recommended, ZDR (✅/❌), Input price / 1M tokens (`$0.042`, `free`, `-` when unknown), Test results / limitations. Pad cells so the pipes line up. Set the line above the table to `Models tested on OpenRouter, ordered by lowest provider price as of <today's date, YYYY-MM-DD> (output tokens are free for all of them):`. Leave the paragraph under the table untouched.
 
-Done when the table has exactly one row per roster id and no row at or above the price cap.
+Done when the table has exactly one row per roster id and no row above the price cap.
 
 ## 6. Update the workflow
 
