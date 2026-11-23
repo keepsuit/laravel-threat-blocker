@@ -161,7 +161,7 @@ return [
         /**
          * Block POST requests classified as spam or phishing by an AI model.
          * This detector requires the laravel/ai package and a provider that supports classification
-         * (typesafe or openrouter). Form data is sent to the provider, token, password and secret fields are excluded.
+         * (typesafe, openrouter, or openai from laravel/ai 1.2). Form data is sent to the provider, token, password and secret fields are excluded.
          */
         AiSpamDetector::class => [
             'enabled' => env('THREAT_BLOCKER_AI_SPAM_DETECTOR_ENABLED', false),
@@ -180,6 +180,8 @@ return [
             'max_length' => 4000,
             // Seconds to wait for the provider.
             'timeout' => 5,
+            // OpenRouter only: route requests to zero data retention endpoints. Models without one return an error and the request is allowed.
+            'zdr' => env('THREAT_BLOCKER_AI_SPAM_DETECTOR_ZDR', false),
         ],
     ],
 ];
@@ -294,7 +296,7 @@ your forms; without it the check is skipped and a warning is logged.
 
 `AiSpamDetector` classifies form data as legitimate, spam or phishing with
 [`laravel/ai`](https://github.com/laravel/ai). It is disabled by default and needs
-`composer require laravel/ai` plus the API key of a provider that supports classification (only `typesafe` and `openrouter` do). Every evaluated request adds latency and provider cost,
+`composer require laravel/ai` plus the API key of a provider that supports classification (`typesafe`, `openrouter`, or `openai` from laravel/ai 1.2). Every evaluated request adds latency and provider cost,
 so restrict it with `only` and keep it last in the detectors list.
 
 - Form data is sent to the external provider. Files, `_method`, fields whose name contains `token`, `password` or

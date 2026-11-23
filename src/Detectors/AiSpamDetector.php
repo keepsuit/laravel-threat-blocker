@@ -63,6 +63,8 @@ class AiSpamDetector implements Detector
 
     protected int $timeout = 5;
 
+    protected bool $zdr = false;
+
     public function id(): string
     {
         return 'ai-spam';
@@ -92,6 +94,7 @@ class AiSpamDetector implements Detector
         $this->provider = is_string($options['provider'] ?? null) && $options['provider'] !== '' ? $options['provider'] : null;
         $this->model = is_string($options['model'] ?? null) && $options['model'] !== '' ? $options['model'] : null;
         $this->timeout = is_int($options['timeout'] ?? null) ? max(1, $options['timeout']) : 5;
+        $this->zdr = filter_var($options['zdr'] ?? false, FILTER_VALIDATE_BOOL);
     }
 
     public function check(Request $request): void
@@ -126,6 +129,8 @@ class AiSpamDetector implements Detector
                     'phishing' => 'An attempt to deceive, obtain credentials or payments, or lure to malicious links.',
                 ]))
                 ->timeout($this->timeout)
+                // Only OpenRouter understands the provider routing field.
+                ->withProviderOptions(fn ($provider) => $this->zdr && $provider->name() === 'openrouter' ? ['provider' => ['zdr' => true]] : [])
                 ->classify($this->provider, $this->model)
                 ->answer('category');
 
